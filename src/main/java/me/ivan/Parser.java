@@ -35,21 +35,25 @@ public class Parser {
 
 //        this.states.push(State.READING_ANY_DONE);
 
-        this.states.push(State.READ_ANY_DONE);
         this.states.push(State.READ_ANY);
+        this.states.push(State.WS);
     }
 
     private static enum State {
         READ_ANY,
-        READ_ANY_DONE,
-        READING_ANY_DONE,
+
+
+
+        WS,
 
         READING_STRING,
-        READING_STRING_DONE,
 
         READING_ARR_ITEM,
+        READING_ARR_ITEM_DONE,
+        READING_ARR_ITEM_NEXT,
 
-        READING_ARR_ITEM_READ_NEXT,
+
+
         READING_STRING_ESCAPED,
         READING_STRING_ESCAPED_U,
         READING_STRING_ESCAPED_U_X,
@@ -60,9 +64,7 @@ public class Parser {
         NUL,
         READING_OBJ,
         READING_ARR,
-        READING_ARR_START,
-        READING_ARR_DONE,
-        READING_ARR_ITEM_READ,
+
 
 
     }
@@ -123,17 +125,29 @@ public class Parser {
         for (int i = 0; i < off; i++) {
             c = buf[i];
             switch (states.peek()) {
+
+                case WS -> {
+                    switch (c) {
+                        case ' ', '\n' -> {}
+                        default -> {
+                            i--;
+                            states.pop();
+                        }
+                    }
+                }
+
                 case READ_ANY, READING_ARR_ITEM -> {
                     switch (c) {
-                        case ' ' -> {}
+                        // case ' ' -> {}
                         case '"' -> states.push(State.READING_STRING);
                         case 'n' -> states.push(State.N);
                         case '{' -> states.push(State.READING_OBJ);
                         case '[' -> {
                             objects.push(new ArrayList<>());
                             states.push(State.READING_ARR);
+                            states.push(State.WS);
                         }
-                        default -> throw new RuntimeException("sss");
+                        default -> throw new RuntimeException(objects.toString());
                     }
                 }
                 case READING_STRING -> {
@@ -239,36 +253,56 @@ public class Parser {
 //                    states.pop();
 //                    states.push(State.READING_ARR);
 //                }
-                case READING_ARR -> {
+                case READING_ARR_ITEM_DONE -> {
+                    i--;
+                    final Object last = objects.pop();
+                    final List list = (List) objects.peek();
+                    list.add(last);
+                }
+                case READING_ARR_ITEM_NEXT -> {
                     switch (c) {
-                        case ' ' -> {}
-                        case ']' -> {commit(); states.pop();}
+                        case ',' -> states.pop();
                         default -> {
                             i--;
-                            states.push(State.READING_ARR_ITEM);
-//                            states.push(State.READ_ANY);
-
-//                            states.push(State.READ_ANY);
-                        }
-                    }
-                }
-                case READING_ARR_ITEM_READ_NEXT -> {
-                    switch (c) {
-                        case ' ' -> {}
-                        case ']' -> states.pop();
-                        case ',' -> {
-                            states.push(State.READING_ARR_ITEM_READ);
+                            states.push(State.READING_ARR_ITEM_NEXT);
+                            states.push(State.WS);
+                            states.push(State.READING_ARR_ITEM_DONE);
                             states.push(State.READ_ANY);
                         }
                     }
                 }
-                case READING_ARR_ITEM_READ -> {
-                    commit();
-                    i--;
-                    states.pop();
-                    states.push(State.READING_ARR_ITEM_READ_NEXT);
+                case READING_ARR -> {
+                    switch (c) {
+                        case ']' -> states.pop();
+                        default -> {
+                            i--;
+                            states.push(State.READING_ARR_ITEM_NEXT);
+                            states.push(State.WS);
+                            states.push(State.READING_ARR_ITEM_DONE);
+                            states.push(State.READ_ANY);
 
+//                            states.push(State.READ_ANY);
+//                            states.push(State.READ_ANY);
+                        }
+                    }
                 }
+//                case READING_ARR_ITEM_READ_NEXT -> {
+//                    switch (c) {
+//                        case ' ' -> {}
+//                        case ']' -> states.pop();
+//                        case ',' -> {
+//                            states.push(State.READING_ARR_ITEM_READ);
+//                            states.push(State.READ_ANY);
+//                        }
+//                    }
+//                }
+//                case READING_ARR_ITEM_READ -> {
+//                    commit();
+//                    i--;
+//                    states.pop();
+//                    states.push(State.READING_ARR_ITEM_READ_NEXT);
+//
+//                }
 
             }
         }
@@ -294,9 +328,10 @@ public class Parser {
     }
 
     public static void main(String[] args) throws IOException {
-        final Parser p = new Parser(new StringReader("[ \"abc\" , \"xyz\" , [\"ccc\" , \"aaa\" ] ]"));
+//        final Parser p = new Parser(new StringReader("[ \"abc\" , \"xyz\" , [\"ccc\" , \"aaa\" ] ]"));
 //        final Parser p = new Parser(new StringReader("  \"absdfsdfsdfc\"  "));
 //        final Parser p = new Parser(new StringReader("   "));
+        final Parser p = new Parser(new StringReader("[ \"abc\" , \"xyz\" ]"));
         p.parse();
         System.out.println(p.objects);
     }
