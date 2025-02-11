@@ -34,12 +34,6 @@ public class Parser {
         this.uXXXX = new char[4];
         this.objects = new Stack<>();
         this.states = new Stack<>();
-
-//        this.states.push(State.READING_ANY_DONE);
-
-//        this.states.push(State.READ_ANY);
-//        this.states.push(State.WS);
-
         plan(State.WS, State.ANY, State.DONE);
     }
 
@@ -81,6 +75,7 @@ public class Parser {
         F, FA, FAL, FALS,
         OBJ, OBJ_NEXT,
         DONE,
+        NUM, INT, UINT, FRAC, EXP, DIGITS, SIGN, NUM_DONE
     }
 
     private void fillBuffer() throws IOException {
@@ -156,11 +151,73 @@ public class Parser {
                             objects.push(new HashMap<>());
                             plan(State.WS, State.OBJ);
                         }
+                        case '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' -> {
+                            i--;
+                            plan(State.INT, State.FRAC, State.EXP, State.NUM_DONE);
+                        }
                         case '[' -> {
                             objects.push(new ArrayList<>());
                             plan(State.WS, State.ARR);
                         }
                         default -> throw new RuntimeException(objects.toString());
+                    }
+                }
+                case NUM_DONE -> {
+                    states.pop();
+                    final Double number = Double.parseDouble(stringBuilder.toString());
+                    stringBuilder.setLength(0);
+                    objects.push(number);
+                }
+                case UINT -> {
+                    states.pop();
+                    switch (c) {
+                        case '0' -> stringBuilder.append(c);
+                        case '1', '2', '3', '4', '5', '6', '7', '8', '9'  -> {
+                            stringBuilder.append(c);
+                            plan(State.DIGITS);
+                        }
+                    }
+                }
+                case INT -> {
+                    states.pop();
+                    plan(State.UINT);
+                    switch (c) {
+                        case '-' -> stringBuilder.append(c);
+                        default -> i--;
+                    }
+                }
+                case FRAC -> {
+                    states.pop();
+                    switch (c) {
+                        case '.' -> {
+                            stringBuilder.append(c);
+                            plan(State.DIGITS);
+                        }
+                        default -> i--;
+                    }
+                }
+                case DIGITS -> {
+                    switch (c) {
+                        case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' ->
+                                stringBuilder.append(c);
+                        default -> {
+                            i--;
+                            states.pop();
+                        }
+                    }
+                }
+                case SIGN -> {
+                    states.pop();
+                    switch (c) {
+                        case '-', '+' -> stringBuilder.append(c);
+                        default -> i--;
+                    }
+                }
+                case EXP -> {
+                    states.pop();
+                    switch (c) {
+                        case 'e', 'E' -> plan(State.SIGN, State.DIGITS);
+                        default -> i--;
                     }
                 }
                 case STR -> {
@@ -355,13 +412,14 @@ public class Parser {
 
     public static void main(String[] args) throws IOException {
 //        final Parser p = new Parser(new StringReader("[ \"abc\" , \"xyz\" , [\"ccc\" , \"aaa\" ] ]"));
-        final Parser p = new Parser(new StringReader("  \"abc\u015Cde\"  "));
-//        final Parser p = new Parser(new StringReader("   "));
+//        final Parser p = new Parser(new StringReader("  \"abc\u015Cde\"  "));
+//        final Parser p = new Parser(new StringReader("[ 1, 2, 3, 3, 4, 1.3, {\"foo\" : 100} , 2 ] "));
+        final Parser p = new Parser(new StringReader("[1]"));
 //        final Parser p = new Parser(new StringReader("[ \"abc\" , \"xyz\", [ \"a\",  [ \"a\", \"a\", \"a\"  ], \"a\", \"a\"  ], \"1\" , \"2\", \"3\" ]"));
 
 
         p.parse();
-        System.out.println(p.objects.peek());
+        System.out.println(p.objects);
     }
 
 
