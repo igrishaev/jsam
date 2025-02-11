@@ -12,15 +12,22 @@
 (defn parse [src]
   (with-open [in (-> src io/reader)]
     (-> (new Parser in)
-        (.parse))))
+        (.readAny))))
 
 (comment
 
   (quick-bench
-      (parse (io/file "data.json")))
+      (parse (io/file "data2.json")))
 
   (quick-bench
-      (json/read-value (io/file "data.json")))
+      (json/read-value (io/file "data2.json")))
+
+  (json/write-value (io/file "data2.json")
+                    (vec
+                     (for [x (range 1000)]
+                       [true false "hello"])))
+
+
 
 
   )

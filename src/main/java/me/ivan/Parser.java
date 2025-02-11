@@ -1,8 +1,6 @@
 package me.ivan;
 
-import java.io.IOException;
-import java.io.Reader;
-import java.io.StringReader;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -17,6 +15,7 @@ public class Parser {
     private int len;
     private boolean eof;
     private final Reader reader;
+    private final PushbackReader pushbackReader;
     private final char[] buf;
     private StringBuilder stringBuilder;
     private Stack<Object> objects;
@@ -34,6 +33,7 @@ public class Parser {
         this.uXXXX = new char[4];
         this.objects = new Stack<>();
         this.states = new Stack<>();
+        this.pushbackReader = new PushbackReader(reader);
         plan(State.WS, State.ANY, State.DONE);
     }
 
@@ -76,6 +76,135 @@ public class Parser {
         OBJ, OBJ_NEXT,
         DONE,
         NUM, INT, UINT, FRAC, EXP, DIGITS, SIGN, NUM_DONE
+    }
+
+    private char read() {
+        final int r;
+        try {
+            r = pushbackReader.read();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        if (r == -1) {
+            throw new RuntimeException("EOF");
+        } else {
+            return (char) r;
+        }
+    }
+
+    private void unread(final char c) {
+        try {
+            pushbackReader.unread(c);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    private void ws() {
+        char c;
+        while (true) {
+            c = read();
+            if (!(c == ' ' || c == '\r' || c == '\n' || c == '\t')) {
+                unread(c);
+                break;
+            }
+        }
+    }
+
+    private List<Object> readArray() {
+        char c;
+        Object el;
+        boolean repeat = true;
+        final List<Object> list = new ArrayList<>();
+        ws();
+        c = read();
+        if (c != '[') {
+            throw new RuntimeException();
+        }
+        ws();
+        c = read();
+        if (c != ']') {
+            unread(c);
+            while (repeat) {
+                el = readAny();
+                list.add(el);
+                ws();
+                c = read();
+                if (c != ',') {
+                    unread(c);
+                    repeat = false;
+                }
+            }
+            c = read();
+            if (c != ']') {
+                throw new RuntimeException();
+            }
+        }
+        return list;
+    }
+
+    public Object readAny() {
+        char c;
+        ws();
+        while (true) {
+            c = read();
+            if (c == 't') {
+                unread(c);
+                return readTrue();
+            } else if (c == 'f') {
+                unread(c);
+                return readFalse();
+            } else if (c == '[') {
+                unread(c);
+                return readArray();
+            } else if (c == '"') {
+                unread(c);
+                return readString();
+            }
+        }
+    }
+
+    private boolean readTrue() {
+        if (read() == 't' && read() == 'r' && read() == 'u' && read() == 'e') {
+            return true;
+        } else {
+            throw new RuntimeException();
+        }
+    }
+
+    private boolean readFalse() {
+        if (read() == 'f' && read() == 'a' && read() == 'l' && read() == 's' && read() == 'e') {
+            return false;
+        } else {
+            throw new RuntimeException();
+        }
+    }
+
+    private String readString() {
+        char c;
+        c = read();
+        if (c != '"') {
+            throw new RuntimeException();
+        }
+        final StringBuilder sb = new StringBuilder();
+        while (true) {
+            c = read();
+            if (c == '"') {
+                return sb.toString();
+            } else if (c == '\\') {
+                c = read();
+                if (c == 'r') {
+                    sb.append('\r');
+                } else if (c == 'n') {
+                    sb.append('\n');
+                } else {
+                    throw new RuntimeException();
+                }
+            } else {
+                sb.append(c);
+            }
+
+        }
     }
 
     private void fillBuffer() throws IOException {
@@ -477,12 +606,13 @@ public class Parser {
 //        final Parser p = new Parser(new StringReader("[ 1, 2, 3, 3, 4, 1.3, {\"foo\" : 100} , 2 ] "));
 //        final Parser p = new Parser(new StringReader(" [null,1,null,-2.33333,{\"aa\":null, \"bb\":[1,null,2]}]"));
 //        final Parser p = new Parser(new StringReader(" [ 1, true, 2 , false, null, 3] "));
-        final Parser p = new Parser(new StringReader("[ \"abc\" , \"xyz\", [ \"a\",  [ \"a\", \"a\", \"a\"  ], \"a\", \"a\"  ], \"1\" , \"2\", \"3\" ]"));
+//        final Parser p = new Parser(new StringReader("[ \"abc\" , \"xyz\", [ \"a\",  [ \"a\", \"a\", \"a\"  ], \"a\", \"a\"  ], \"1\" , \"2\", \"3\" ]"));
 
 
+        final Parser p = new Parser(new StringReader("  [ true , false, [ true, false ], \"abc\" ] "));
 
 
-        System.out.println(p.parse());
+        System.out.println(p.readAny());
     }
 
 
