@@ -11,7 +11,7 @@ import java.util.Stack;
 
 public class Parser {
 
-    public static final int bufSize = 32;
+    public static final int bufSize = 0xFFFF;
     private int r;
     private int off;
     private int len;
@@ -70,9 +70,9 @@ public class Parser {
         WS, COLON, QUOTE,
         ARR, ARR_NEXT,
         STR, STR_ESC, ESC_U, U_X, U_XX, U_XXX,
-        N, NU, NUL,
-        T, TR, TRU,
-        F, FA, FAL, FALS,
+        N, U, L, NULL,
+        T, R, E, TRUE,
+        F, A, S, FALSE,
         OBJ, OBJ_NEXT,
         DONE,
         NUM, INT, UINT, FRAC, EXP, DIGITS, SIGN, NUM_DONE
@@ -146,7 +146,18 @@ public class Parser {
                     states.pop();
                     switch (c) {
                         case '"' -> states.push(State.STR);
-                        case 'n' -> states.push(State.N);
+                        case 'n' -> {
+                            i--;
+                            plan(State.N, State.U, State.L, State.L, State.NULL);
+                        }
+                        case 't' -> {
+                            i--;
+                            plan(State.T, State.R, State.U, State.E, State.TRUE);
+                        }
+                        case 'f' -> {
+                            i--;
+                            plan(State.F, State.A, State.L, State.S, State.E, State.FALSE);
+                        }
                         case '{' -> {
                             objects.push(new HashMap<>());
                             plan(State.WS, State.OBJ);
@@ -164,6 +175,7 @@ public class Parser {
                 }
                 case NUM_DONE -> {
                     states.pop();
+                    i--;
                     final Double number = Double.parseDouble(stringBuilder.toString());
                     stringBuilder.setLength(0);
                     objects.push(number);
@@ -290,37 +302,87 @@ public class Parser {
                         throw new RuntimeException();
                     }
                 }
-//                case N -> {
-//                    switch (c) {
-//                        case 'u' -> state = State.NU;
-//                        default -> throw new RuntimeException();
-//                    }
-//                }
-//                case NU -> {
-//                    switch (c) {
-//                        case 'l' -> state = State.NUL;
-//                        default -> throw new RuntimeException();
-//                    }
-//                }
-//                case NUL -> {
-//                    switch (c) {
-//                        case 'l' -> {
-//                            System.out.println("null");
-//                            state = State.READY;
-//                        }
-//                        default -> throw new RuntimeException();
-//                    }
-//                }
-//                case READING_OBJ -> {
-//                    objStack.add(new HashMap<>());
-//                    stateStack.push(State.READ_ALL, State.READING_STRING);
-//                    switch (c) {
-//                        case ' ' -> {}
-//                        case '"' -> {state = State.READING_STRING;}
-//                        default -> throw new RuntimeException();
-//                    }
-//                }
-
+                case N -> {
+                    states.pop();
+                    switch (c) {
+                        case 'n' -> stringBuilder.append(c);
+                        default -> throw new RuntimeException();
+                    }
+                }
+                case U -> {
+                    states.pop();
+                    switch (c) {
+                        case 'u' -> stringBuilder.append(c);
+                        default -> throw new RuntimeException();
+                    }
+                }
+                case L -> {
+                    states.pop();
+                    switch (c) {
+                        case 'l' -> stringBuilder.append(c);
+                        default -> throw new RuntimeException();
+                    }
+                }
+                case R -> {
+                    states.pop();
+                    switch (c) {
+                        case 'r' -> stringBuilder.append(c);
+                        default -> throw new RuntimeException();
+                    }
+                }
+                case E -> {
+                    states.pop();
+                    switch (c) {
+                        case 'e' -> stringBuilder.append(c);
+                        default -> throw new RuntimeException();
+                    }
+                }
+                case F -> {
+                    states.pop();
+                    switch (c) {
+                        case 'f' -> stringBuilder.append(c);
+                        default -> throw new RuntimeException();
+                    }
+                }
+                case A -> {
+                    states.pop();
+                    switch (c) {
+                        case 'a' -> stringBuilder.append(c);
+                        default -> throw new RuntimeException();
+                    }
+                }
+                case S -> {
+                    states.pop();
+                    switch (c) {
+                        case 's' -> stringBuilder.append(c);
+                        default -> throw new RuntimeException();
+                    }
+                }
+                case T -> {
+                    states.pop();
+                    switch (c) {
+                        case 't' -> stringBuilder.append(c);
+                        default -> throw new RuntimeException();
+                    }
+                }
+                case NULL -> {
+                    i--;
+                    stringBuilder.setLength(0);
+                    states.pop();
+                    objects.push(null);
+                }
+                case TRUE -> {
+                    i--;
+                    stringBuilder.setLength(0);
+                    states.pop();
+                    objects.push(true);
+                }
+                case FALSE -> {
+                    i--;
+                    stringBuilder.setLength(0);
+                    states.pop();
+                    objects.push(false);
+                }
                 case ARR_NEXT -> {
                     states.pop();
                     collapseList();
@@ -397,29 +459,30 @@ public class Parser {
         }
     }
 
-    private Object complete() {
-        return null;
-    }
-
     public Object parse() throws IOException {
         while (!eof) {
             fillBuffer();
-//            printBuffer();
             parseBuf();
         }
-        return complete();
+        if (objects.empty()) {
+            return null;
+        } else {
+            return objects.peek();
+        }
     }
 
     public static void main(String[] args) throws IOException {
 //        final Parser p = new Parser(new StringReader("[ \"abc\" , \"xyz\" , [\"ccc\" , \"aaa\" ] ]"));
 //        final Parser p = new Parser(new StringReader("  \"abc\u015Cde\"  "));
 //        final Parser p = new Parser(new StringReader("[ 1, 2, 3, 3, 4, 1.3, {\"foo\" : 100} , 2 ] "));
-        final Parser p = new Parser(new StringReader("[1]"));
-//        final Parser p = new Parser(new StringReader("[ \"abc\" , \"xyz\", [ \"a\",  [ \"a\", \"a\", \"a\"  ], \"a\", \"a\"  ], \"1\" , \"2\", \"3\" ]"));
+//        final Parser p = new Parser(new StringReader(" [null,1,null,-2.33333,{\"aa\":null, \"bb\":[1,null,2]}]"));
+//        final Parser p = new Parser(new StringReader(" [ 1, true, 2 , false, null, 3] "));
+        final Parser p = new Parser(new StringReader("[ \"abc\" , \"xyz\", [ \"a\",  [ \"a\", \"a\", \"a\"  ], \"a\", \"a\"  ], \"1\" , \"2\", \"3\" ]"));
 
 
-        p.parse();
-        System.out.println(p.objects);
+
+
+        System.out.println(p.parse());
     }
 
 
