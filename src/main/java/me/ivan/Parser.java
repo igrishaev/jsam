@@ -3,7 +3,9 @@ package me.ivan;
 import java.io.*;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Parser {
 
@@ -11,6 +13,7 @@ public class Parser {
     private final char[] buf;
     private char[] uXXXX;
     private int i;
+    private StringBuilder sb;
 
     private final int LEN;
 
@@ -28,6 +31,7 @@ public class Parser {
 //        this.reader = Files.newBufferedReader(file.toPath());
         this.reader = new FileReader(file);
         this.i = 0;
+        this.sb = new StringBuilder();
     }
 
     private int charToInt(final char c) {
@@ -61,21 +65,21 @@ public class Parser {
     }
 
     private char read() {
-//        try {
-//            i++;
-//            return (char) reader.read();
-//        } catch (IOException e) {
-//            throw new UncheckedIOException(e);
-//        }
         if (i == LEN) {
             readMore();
             i = 0;
         }
         // TODO: override it
         return buf[i++];
-//        reader.read();
-//        return buf[i++];
     }
+
+//    private char peek() {
+////        if (i == LEN) {
+////            readMore();
+////            i = 0;
+////        }
+//        return buf[i];
+//    }
 
     private void unread() {
 //        reader.
@@ -93,6 +97,46 @@ public class Parser {
         }
     }
 
+    private Map<String, Object> readObject() {
+        char c;
+        ws();
+        c = read();
+        if (c != '{') {
+            throw new RuntimeException("not a map");
+        }
+        final Map<String, Object> map = new HashMap<>();
+        boolean repeat = true;
+        ws();
+        c = read();
+        if (c == '}') {
+            return map;
+        }
+        unread();
+        while (repeat) {
+            ws();
+            String key = readString();
+            ws();
+            c = read();
+            if (c != ':') {
+                throw new RuntimeException("expected :");
+            }
+            ws();
+            Object val = readAny();
+            map.put(key, val);
+            ws();
+            c = read();
+            if (c != ',') {
+                unread();
+                repeat = false;
+            }
+        }
+        c = read();
+        if (c != '}') {
+            throw new RuntimeException("expected }");
+        }
+        return map;
+    }
+
     private List<Object> readArray() {
         char c;
         Object el;
@@ -105,22 +149,23 @@ public class Parser {
         }
         ws();
         c = read();
-        if (c != ']') {
-            unread();
-            while (repeat) {
-                el = readAny();
-                list.add(el);
-                ws();
-                c = read();
-                if (c != ',') {
-                    unread();
-                    repeat = false;
-                }
-            }
+        if (c == ']') {
+            return list;
+        }
+        unread();
+        while (repeat) {
+            el = readAny();
+            list.add(el);
+            ws();
             c = read();
-            if (c != ']') {
-                throw new RuntimeException();
+            if (c != ',') {
+                unread();
+                repeat = false;
             }
+        }
+        c = read();
+        if (c != ']') {
+            throw new RuntimeException();
         }
         return list;
     }
@@ -134,17 +179,75 @@ public class Parser {
         ws();
         char c = read();
         unread();
+        return switch (c) {
+            case 't' -> readTrue();
+            case 'f' -> readFalse();
+            case 'n' -> readNull();
+            case '"' -> readString();
+            case '[' -> readArray();
+            case '{' -> readObject();
+            case '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' -> readNumber();
+            default -> throw new RuntimeException("unknown");
+        };
+    }
+
+    private void readDigits() {
+        char c;
+        c = read();
+        if (isDigit(c)) {
+            sb.append(c);
+        } else {
+            throw new RuntimeException("expected a digit");
+        }
         while (true) {
-            if (c == 't') {
-                return readTrue();
-            } else if (c == 'f') {
-                return readFalse();
-            } else if (c == '[') {
-                return readArray();
-            } else if (c == '"') {
-                return readString();
+            c = read();
+            if (isDigit(c)) {
+                sb.append(c);
+            } else {
+                unread();
+                break;
             }
         }
+    }
+
+    private void readInteger() {
+        
+    }
+
+    private void readFraction() {
+        char c;
+        c = read();
+        if (c == '.') {
+            sb.append('.');
+            readDigits();
+        } else {
+            unread();
+        }
+    }
+
+    private void readExponent() {
+        char c = read();
+        if (c == 'e' || c == 'E') {
+            sb.append(c);
+            c = read();
+            if (c == '-' || c == '+') {
+                sb.append(c);
+                readDigits();
+            } else {
+                throw new RuntimeException("expected sign");
+            }
+        } else {
+            unread();
+        }
+    }
+
+    private Number readNumber() {
+        readInteger();
+        readFraction();
+        readExponent();
+        final Double num = Double.parseDouble(sb.toString());
+        sb.setLength(0);
+        return num;
     }
 
     private boolean readTrue() {
@@ -163,17 +266,27 @@ public class Parser {
         }
     }
 
+    private Object readNull() {
+        if (read() == 'n' && read() == 'u' && read() == 'l' && read() == 'l') {
+            return null;
+        } else {
+            throw new RuntimeException();
+        }
+    }
+
     private String readString() {
+        final String string;
         char c;
         c = read();
         if (c != '"') {
             throw new RuntimeException();
         }
-        final StringBuilder sb = new StringBuilder();
         while (true) {
             c = read();
             if (c == '"') {
-                return sb.toString();
+                string = sb.toString();
+                sb.setLength(0);
+                return string;
             } else if (c == '\\') {
                 c = read();
                 if (c == 'r') {
@@ -188,6 +301,10 @@ public class Parser {
             }
 
         }
+    }
+
+    private static boolean isDigit(final char c) {
+        return '0' <= c && c <= '9';
     }
 
     private static boolean isHex(final char c) {
@@ -220,7 +337,7 @@ public class Parser {
 
 //        final Parser p = new Parser(new StringReader("  [ true , false, [ true, false ], \"abc\" ] "));
 //        final Parser p = new Parser("  [ true , false, [ true, false ], \"abc\" ] ");
-        final Parser p = new Parser(new File("data2.json"), 4096);
+        final Parser p = new Parser(new File("data3.json"), 4096);
 
         System.out.println(p.parse());
     }
