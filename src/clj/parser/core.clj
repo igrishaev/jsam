@@ -18,22 +18,30 @@
   (-> (new Parser content)
       (.parse)))
 
+(defn parse3 [^java.io.File file len]
+  (-> (new Parser file len)
+      (.parse)))
+
 (comment
 
+  ;; file
   (quick-bench
-      (parse (io/file "data2.json")))
+      (parse3 (io/file "data2.json") 2048))
 
+  ;; file
   (quick-bench
       (json/read-value (io/file "data2.json")))
 
   (def content
     (slurp "data2.json"))
 
+  ;; string
   (quick-bench
       (parse2 content))
 
   (quick-bench
       (json/read-value content))
+
 
   (json/write-value (io/file "data2.json")
                     (vec

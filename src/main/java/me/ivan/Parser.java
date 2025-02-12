@@ -1,24 +1,31 @@
 package me.ivan;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Parser {
 
+    private Reader reader;
     private final char[] buf;
     private char[] uXXXX;
     private int i;
 
+    private final int LEN;
+
     public Parser(final String content) {
         this.uXXXX = new char[4];
         this.buf = content.toCharArray();
+        this.LEN = buf.length;
         this.i = 0;
     }
 
-    public Parser(final Reader reader) {
+    public Parser(final File file, final int len) throws IOException {
         this.uXXXX = new char[4];
-        this.buf = new char[2048];
+        this.LEN = len;
+        this.buf = new char[len];
+        this.reader = Files.newBufferedReader(file.toPath());
         this.i = 0;
     }
 
@@ -44,11 +51,33 @@ public class Parser {
         };
     }
 
+    private void readMore() {
+//        try {
+//            reader.read(buf);
+//        } catch (IOException e) {
+//            throw new UncheckedIOException(e);
+//        }
+    }
+
     private char read() {
+//        try {
+//            i++;
+//            return (char) reader.read();
+//        } catch (IOException e) {
+//            throw new UncheckedIOException(e);
+//        }
+//        if (i == LEN) {
+//            readMore();
+//            i = 0;
+//        }
+        // TODO: override it
         return buf[i++];
+//        reader.read();
+//        return buf[i++];
     }
 
     private void unread() {
+//        reader.
         i--;
     }
 
@@ -96,6 +125,7 @@ public class Parser {
     }
 
     public Object parse() {
+        readMore();
         return readAny();
     }
 
@@ -189,6 +219,7 @@ public class Parser {
 
 //        final Parser p = new Parser(new StringReader("  [ true , false, [ true, false ], \"abc\" ] "));
         final Parser p = new Parser("  [ true , false, [ true, false ], \"abc\" ] ");
+//        final Parser p = new Parser(new File("data2.json"), 4096);
 
         System.out.println(p.parse());
     }
