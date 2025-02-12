@@ -12,7 +12,11 @@
 (defn parse [src]
   (with-open [in (-> src io/reader)]
     (-> (new Parser in)
-        (.readAny))))
+        (.parse))))
+
+(defn parse2 [^String content]
+  (-> (new Parser content)
+      (.parse)))
 
 (comment
 
@@ -21,6 +25,15 @@
 
   (quick-bench
       (json/read-value (io/file "data2.json")))
+
+  (def content
+    (slurp "data2.json"))
+
+  (quick-bench
+      (parse2 content))
+
+  (quick-bench
+      (json/read-value content))
 
   (json/write-value (io/file "data2.json")
                     (vec
