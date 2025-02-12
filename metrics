@@ -6,6 +6,9 @@ Execution time mean : 340.281693 µs
 Files.newBufferedReader + inner buffer
 Execution time mean : 158.011501 µs
 
+FileReader + inner buffer
+Execution time mean : 157.019559 µs
+
 jsonista file
 Execution time mean : 204.684882 µs
 

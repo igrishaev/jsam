@@ -25,7 +25,8 @@ public class Parser {
         this.uXXXX = new char[4];
         this.LEN = len;
         this.buf = new char[len];
-        this.reader = Files.newBufferedReader(file.toPath());
+//        this.reader = Files.newBufferedReader(file.toPath());
+        this.reader = new FileReader(file);
         this.i = 0;
     }
 
@@ -52,11 +53,11 @@ public class Parser {
     }
 
     private void readMore() {
-//        try {
-//            reader.read(buf);
-//        } catch (IOException e) {
-//            throw new UncheckedIOException(e);
-//        }
+        try {
+            reader.read(buf);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     private char read() {
@@ -66,10 +67,10 @@ public class Parser {
 //        } catch (IOException e) {
 //            throw new UncheckedIOException(e);
 //        }
-//        if (i == LEN) {
-//            readMore();
-//            i = 0;
-//        }
+        if (i == LEN) {
+            readMore();
+            i = 0;
+        }
         // TODO: override it
         return buf[i++];
 //        reader.read();
@@ -218,8 +219,8 @@ public class Parser {
 
 
 //        final Parser p = new Parser(new StringReader("  [ true , false, [ true, false ], \"abc\" ] "));
-        final Parser p = new Parser("  [ true , false, [ true, false ], \"abc\" ] ");
-//        final Parser p = new Parser(new File("data2.json"), 4096);
+//        final Parser p = new Parser("  [ true , false, [ true, false ], \"abc\" ] ");
+        final Parser p = new Parser(new File("data2.json"), 4096);
 
         System.out.println(p.parse());
     }
