@@ -1,7 +1,6 @@
 package me.ivan;
 
 import java.io.*;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -191,17 +190,17 @@ public class Parser {
         };
     }
 
-    private void readDigits() {
+    private void readOneAndMoreDigits() {
         char c;
         c = read();
-        if (isDigit(c)) {
+        if (isZeroNine(c)) {
             sb.append(c);
         } else {
             throw new RuntimeException("expected a digit");
         }
         while (true) {
             c = read();
-            if (isDigit(c)) {
+            if (isZeroNine(c)) {
                 sb.append(c);
             } else {
                 unread();
@@ -211,7 +210,30 @@ public class Parser {
     }
 
     private void readInteger() {
-        
+        char c = read();
+        if (c == '-') {
+            sb.append(c);
+        } else {
+            unread();
+        }
+        c = read();
+        if (c == '0') {
+            sb.append(c);
+        } else if (isOneNine(c)) {
+            sb.append(c);
+            while (true) {
+                c = read();
+                if (isZeroNine(c)) {
+                    sb.append(c);
+                } else {
+                    unread();
+                    break;
+                }
+            }
+        } else {
+            throw new RuntimeException("aaa");
+        }
+
     }
 
     private void readFraction() {
@@ -219,7 +241,7 @@ public class Parser {
         c = read();
         if (c == '.') {
             sb.append('.');
-            readDigits();
+            readOneAndMoreDigits();
         } else {
             unread();
         }
@@ -232,7 +254,7 @@ public class Parser {
             c = read();
             if (c == '-' || c == '+') {
                 sb.append(c);
-                readDigits();
+                readOneAndMoreDigits();
             } else {
                 throw new RuntimeException("expected sign");
             }
@@ -289,12 +311,17 @@ public class Parser {
                 return string;
             } else if (c == '\\') {
                 c = read();
-                if (c == 'r') {
-                    sb.append('\r');
-                } else if (c == 'n') {
-                    sb.append('\n');
-                } else {
-                    throw new RuntimeException();
+                switch (c) {
+                    case 'r' -> sb.append('\r');
+                    case 'n' -> sb.append('\n');
+                    case 'b' -> sb.append('\b');
+                    case 'f' -> sb.append('\f');
+                    case 't' -> sb.append('\t');
+                    case '\\' -> sb.append('\\');
+                    case '/' -> sb.append('/');
+                    case '"' -> sb.append('"');
+                    default -> throw new RuntimeException("dunno " + c);
+
                 }
             } else {
                 sb.append(c);
@@ -303,18 +330,16 @@ public class Parser {
         }
     }
 
-    private static boolean isDigit(final char c) {
+    private static boolean isZeroNine(final char c) {
         return '0' <= c && c <= '9';
     }
 
+    private static boolean isOneNine(final char c) {
+        return '1' <= c && c <= '9';
+    }
+
     private static boolean isHex(final char c) {
-        return switch (c) {
-            case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-                    'a', 'b', 'c', 'd', 'e', 'f',
-                    'A', 'B', 'C', 'D', 'E', 'F' ->
-                    true;
-            default -> false;
-        };
+        return ('0' <= c && c <= '9') || ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F');
     }
 
     private char getUUUUChar() {
@@ -337,7 +362,7 @@ public class Parser {
 
 //        final Parser p = new Parser(new StringReader("  [ true , false, [ true, false ], \"abc\" ] "));
 //        final Parser p = new Parser("  [ true , false, [ true, false ], \"abc\" ] ");
-        final Parser p = new Parser(new File("data3.json"), 4096);
+        final Parser p = new Parser(new File("data.json"), 4096);
 
         System.out.println(p.parse());
     }

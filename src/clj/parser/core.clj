@@ -26,11 +26,11 @@
 
   ;; file
   (quick-bench
-      (parse3 (io/file "data2.json") 2048))
+      (parse3 (io/file "data.json") 8192))
 
   ;; file
   (quick-bench
-      (json/read-value (io/file "data2.json")))
+      (json/read-value (io/file "data.json")))
 
   (def content
     (slurp "data2.json"))
