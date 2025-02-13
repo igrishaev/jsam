@@ -25,3 +25,8 @@ Execution time mean : 90.646492 µs
 100mb
              Execution time mean : 864.672364 ms jsam + leading buf + cache
              Execution time mean : 602.404620 ms jsonista
+
+
+100mb
+             Execution time mean : 885.498253 ms jsam + leading buf + cache + num cache
+             Execution time mean : 602.404620 ms jsonista

@@ -17,6 +17,7 @@ public class Parser {
     private int pos;
     private final Map<Integer, String> cache;
     private boolean overflow;
+    private final Map<String, Number> numCache;
 
     private final int LEN;
 
@@ -32,6 +33,7 @@ public class Parser {
         this.uXXXX = CharBuffer.allocate(4);
         this.buf = content.toCharArray();
         this.LEN = buf.length;
+        numCache = new HashMap<>();
         overflow = false;
         cache = new HashMap<>();
         this.i = 0;
@@ -40,6 +42,7 @@ public class Parser {
     public Parser(final File file, final int len) throws IOException {
         this.uXXXX = CharBuffer.allocate(4);
         this.LEN = len;
+        numCache = new HashMap<>();
         cache = new HashMap<>();
         this.buf = new char[len];
 //        this.reader = Files.newBufferedReader(file.toPath());
@@ -84,11 +87,12 @@ public class Parser {
 //            }
 
         if (sb.isEmpty()) {
+//            return new String(cbuf);
             final int hash = getHash(cbuf, 0, pos);
             if (cache.containsKey(hash)) {
                 return cache.get(hash);
             } else {
-                final String result = new String(buf, 0, pos);
+                final String result = new String(cbuf, 0, pos);
                 cache.put(hash, result);
                 return result;
             }
@@ -301,8 +305,17 @@ public class Parser {
         readFraction();
         readExponent();
         final String string = getCollected();
+        Number n = numCache.get(string);
+        if (n == null) {
+            n = Double.parseDouble(string);
+            numCache.put(string, n);
+            return n;
+        } else {
+            return n;
+        }
 //        final Double num = Double.parseDouble(string);
-        return 42;
+//        return Integer.parseInt("23423423");
+//        return 42;
 //        sb.setLength(0);
 //        return num;
     }
