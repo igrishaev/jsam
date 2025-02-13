@@ -1,30 +1,27 @@
 package me.ivan;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Parser {
 
     private Reader reader;
     private final char[] buf;
-    private char[] uXXXX;
+    private StringBuilder uXXXX;
     private int i;
     private StringBuilder sb;
 
     private final int LEN;
 
     public Parser(final String content) {
-        this.uXXXX = new char[4];
+        this.uXXXX = new StringBuilder(4);
         this.buf = content.toCharArray();
         this.LEN = buf.length;
         this.i = 0;
     }
 
     public Parser(final File file, final int len) throws IOException {
-        this.uXXXX = new char[4];
+        this.uXXXX = new StringBuilder(4);
         this.LEN = len;
         this.buf = new char[len];
 //        this.reader = Files.newBufferedReader(file.toPath());
@@ -321,11 +318,13 @@ public class Parser {
                     case '/' -> sb.append('/');
                     case '"' -> sb.append('"');
                     case 'u' -> {
-                        uXXXX[0] = read();
-                        uXXXX[1] = read();
-                        uXXXX[2] = read();
-                        uXXXX[3] = read();
-                        sb.append(getUUUUChar());
+                        uXXXX.append(read());
+                        uXXXX.append(read());
+                        uXXXX.append(read());
+                        uXXXX.append(read());
+                        final char xxxx = (char) HexFormat.fromHexDigits(uXXXX);
+                        uXXXX.setLength(0);
+                        sb.append(xxxx);
                     }
                     default -> throw new RuntimeException("dunno " + c);
 
@@ -349,15 +348,6 @@ public class Parser {
         return ('0' <= c && c <= '9') || ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F');
     }
 
-    private char getUUUUChar() {
-        return (char) (
-                ((charToInt(uXXXX[0]) & 0xFF) << 24) |
-                ((charToInt(uXXXX[1]) & 0xFF) << 16) |
-                ((charToInt(uXXXX[2]) & 0xFF) <<  8) |
-                ((charToInt(uXXXX[3]) & 0xFF))
-        );
-    }
-
     public static void main(String[] args) throws IOException {
 //        final Parser p = new Parser(new StringReader("[ \"abc\" , \"xyz\" , [\"ccc\" , \"aaa\" ] ]"));
 //        final Parser p = new Parser(new StringReader("  \"abc\u015Cde\"  "));
@@ -369,9 +359,9 @@ public class Parser {
 
 //        final Parser p = new Parser(new StringReader("  [ true , false, [ true, false ], \"abc\" ] "));
 //        final Parser p = new Parser("  [ true , false, [ true, false ], \"abc\" ] ");
-        final Parser p = new Parser(new File("data.json"), 4096);
-
-        System.out.println(p.parse());
+        final Parser p = new Parser(new File("/Users/ivan.grishaev-external/Downloads/100mb.json"), 4096);
+        p.parse();
+//        System.out.println();
     }
 
 
