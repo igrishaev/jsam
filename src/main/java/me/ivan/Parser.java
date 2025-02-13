@@ -7,6 +7,7 @@ import java.util.*;
 public class Parser {
 
     private Reader reader;
+    private int bufPos;
     private final char[] buf;
     private CharBuffer uXXXX;
     private int i;
@@ -40,6 +41,7 @@ public class Parser {
     }
 
     public Parser(final File file, final int len) throws IOException {
+        this.bufPos = 0;
         this.uXXXX = CharBuffer.allocate(4);
         this.LEN = len;
         numCache = new HashMap<>();
@@ -48,7 +50,7 @@ public class Parser {
 //        this.reader = Files.newBufferedReader(file.toPath());
         this.reader = new FileReader(file);
         this.i = 0;
-        this.sb = new StringBuilder(0xFFF);
+        this.sb = new StringBuilder(0xFF);
         this.cbuf = new char[cbufLen];
 //        this.cbuf = CharBuffer.allocate(0xFF);
     }
@@ -102,14 +104,18 @@ public class Parser {
 
     private void readMore() {
         try {
-            reader.read(buf);
+            final int r = reader.read(buf);
+            if (r == -1) {
+                throw new RuntimeException("EOF");
+            }
+            bufPos = r;
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
 
     private char read() {
-        if (i == LEN) {
+        if (i == bufPos) {
             readMore();
             i = 0;
         }
