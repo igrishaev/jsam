@@ -320,6 +320,13 @@ public class Parser {
                     case '\\' -> sb.append('\\');
                     case '/' -> sb.append('/');
                     case '"' -> sb.append('"');
+                    case 'u' -> {
+                        uXXXX[0] = read();
+                        uXXXX[1] = read();
+                        uXXXX[2] = read();
+                        uXXXX[3] = read();
+                        sb.append(getUUUUChar());
+                    }
                     default -> throw new RuntimeException("dunno " + c);
 
                 }
