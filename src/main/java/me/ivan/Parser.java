@@ -11,26 +11,91 @@ public class Parser {
     private CharBuffer uXXXX;
     private int i;
     private StringBuilder sb;
+//    private CharBuffer cbuf;
+    private int cbufLen = 0xFF;
+    private char[] cbuf;
+    private int pos;
+    private final Map<Integer, String> cache;
+    private boolean overflow;
 
     private final int LEN;
+
+    private static int getHash(final char[] buf, final int off, final int len) {
+        int result = 1;
+        for (int i = off; i < len; i++) {
+            result = 31 * result + buf[i];
+        }
+        return result;
+    }
 
     public Parser(final String content) {
         this.uXXXX = CharBuffer.allocate(4);
         this.buf = content.toCharArray();
         this.LEN = buf.length;
+        overflow = false;
+        cache = new HashMap<>();
         this.i = 0;
     }
 
     public Parser(final File file, final int len) throws IOException {
         this.uXXXX = CharBuffer.allocate(4);
         this.LEN = len;
+        cache = new HashMap<>();
         this.buf = new char[len];
 //        this.reader = Files.newBufferedReader(file.toPath());
         this.reader = new FileReader(file);
         this.i = 0;
-        this.sb = new StringBuilder();
+        this.sb = new StringBuilder(0xFFF);
+        this.cbuf = new char[cbufLen];
+//        this.cbuf = CharBuffer.allocate(0xFF);
     }
     
+    private void reset() {
+        pos = 0;
+//        cbuf.clear();
+        sb.setLength(0);
+    }
+    
+    private void append(final char c) {
+//        cbuf.append(c);
+        if (pos < cbufLen) {
+            cbuf[pos++] = c;
+
+//            cbuf.append(c);
+        } else {
+            sb.append(c);
+        }
+
+    }
+
+    private String getCollected() {
+
+//        return "42";
+
+//        final char[] buf = cbuf.array();
+//        final int off = 0;
+//        final int len = cbuf.position();
+//        final int hash = getHash(buf, off, len);
+//            String s = cache.get(hash);
+//            if {
+//                final String result = "test"; // new String(buf, off, len);
+//                cache.put(hash, result);
+//                return result;
+//            }
+
+        if (sb.isEmpty()) {
+            final int hash = getHash(cbuf, 0, pos);
+            if (cache.containsKey(hash)) {
+                return cache.get(hash);
+            } else {
+                final String result = new String(buf, 0, pos);
+                cache.put(hash, result);
+                return result;
+            }
+        } else
+            return new String(cbuf) + sb;
+    }
+
     private void readMore() {
         try {
             reader.read(buf);
@@ -161,14 +226,14 @@ public class Parser {
         char c;
         c = read();
         if (isZeroNine(c)) {
-            sb.append(c);
+            append(c);
         } else {
             throw new RuntimeException("expected a digit");
         }
         while (true) {
             c = read();
             if (isZeroNine(c)) {
-                sb.append(c);
+                append(c);
             } else {
                 unread();
                 break;
@@ -179,19 +244,19 @@ public class Parser {
     private void readInteger() {
         char c = read();
         if (c == '-') {
-            sb.append(c);
+            append(c);
         } else {
             unread();
         }
         c = read();
         if (c == '0') {
-            sb.append(c);
+            append(c);
         } else if (isOneNine(c)) {
-            sb.append(c);
+            append(c);
             while (true) {
                 c = read();
                 if (isZeroNine(c)) {
-                    sb.append(c);
+                    append(c);
                 } else {
                     unread();
                     break;
@@ -207,7 +272,7 @@ public class Parser {
         char c;
         c = read();
         if (c == '.') {
-            sb.append('.');
+            append('.');
             readOneAndMoreDigits();
         } else {
             unread();
@@ -217,10 +282,10 @@ public class Parser {
     private void readExponent() {
         char c = read();
         if (c == 'e' || c == 'E') {
-            sb.append(c);
+            append(c);
             c = read();
             if (c == '-' || c == '+') {
-                sb.append(c);
+                append(c);
                 readOneAndMoreDigits();
             } else {
                 throw new RuntimeException("expected sign");
@@ -231,12 +296,15 @@ public class Parser {
     }
 
     private Number readNumber() {
+        reset();
         readInteger();
         readFraction();
         readExponent();
-        final Double num = Double.parseDouble(sb.toString());
-        sb.setLength(0);
-        return num;
+        final String string = getCollected();
+//        final Double num = Double.parseDouble(string);
+        return 42;
+//        sb.setLength(0);
+//        return num;
     }
 
     private boolean readTrue() {
@@ -264,6 +332,7 @@ public class Parser {
     }
 
     private String readString() {
+        reset();
         final String string;
         char c;
         c = read();
@@ -273,20 +342,21 @@ public class Parser {
         while (true) {
             c = read();
             if (c == '"') {
-                string = sb.toString();
-                sb.setLength(0);
-                return string;
+                return getCollected();
+//                string = sb.toString();
+//                sb.setLength(0);
+//                return string;
             } else if (c == '\\') {
                 c = read();
                 switch (c) {
-                    case 'r' -> sb.append('\r');
-                    case 'n' -> sb.append('\n');
-                    case 'b' -> sb.append('\b');
-                    case 'f' -> sb.append('\f');
-                    case 't' -> sb.append('\t');
-                    case '\\' -> sb.append('\\');
-                    case '/' -> sb.append('/');
-                    case '"' -> sb.append('"');
+                    case 'r' -> append('\r');
+                    case 'n' -> append('\n');
+                    case 'b' -> append('\b');
+                    case 'f' -> append('\f');
+                    case 't' -> append('\t');
+                    case '\\' -> append('\\');
+                    case '/' -> append('/');
+                    case '"' -> append('"');
                     case 'u' -> {
                         uXXXX.append(read());
                         uXXXX.append(read());
@@ -294,15 +364,14 @@ public class Parser {
                         uXXXX.append(read());
                         uXXXX.rewind();
                         final char xxxx = (char) HexFormat.fromHexDigits(uXXXX);
-                        sb.append(xxxx);
+                        append(xxxx);
                     }
                     default -> throw new RuntimeException("dunno " + c);
 
                 }
             } else {
-                sb.append(c);
+                append(c);
             }
-
         }
     }
 
@@ -325,11 +394,17 @@ public class Parser {
 
 //        final Parser p = new Parser(new StringReader("  [ true , false, [ true, false ], \"abc\" ] "));
 //        final Parser p = new Parser("  [ true , false, [ true, false ], \"abc\" ] ");
-        final Parser p = new Parser(new File("/Users/ivan.grishaev-external/Downloads/100mb.json"), 4096);
+        final Parser p = new Parser(new File("100mb.json"), 4096);
         final long t1 = System.currentTimeMillis();
         p.parse();
         final long t2 = System.currentTimeMillis();
         System.out.println(t2 - t1);
+//        final StringBuilder sb = new StringBuilder(4);
+//        System.out.println(sb.hashCode());
+
+
+
+
 //        System.out.println();
     }
 

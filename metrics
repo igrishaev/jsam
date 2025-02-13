@@ -20,3 +20,8 @@ Execution time mean : 134.806641 µs
 
 my string no check
 Execution time mean : 90.646492 µs
+
+
+100mb
+             Execution time mean : 864.672364 ms jsam + leading buf + cache
+             Execution time mean : 602.404620 ms jsonista
