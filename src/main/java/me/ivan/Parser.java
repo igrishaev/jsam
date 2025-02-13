@@ -1,27 +1,28 @@
 package me.ivan;
 
 import java.io.*;
+import java.nio.CharBuffer;
 import java.util.*;
 
 public class Parser {
 
     private Reader reader;
     private final char[] buf;
-    private StringBuilder uXXXX;
+    private CharBuffer uXXXX;
     private int i;
     private StringBuilder sb;
 
     private final int LEN;
 
     public Parser(final String content) {
-        this.uXXXX = new StringBuilder(4);
+        this.uXXXX = CharBuffer.allocate(4);
         this.buf = content.toCharArray();
         this.LEN = buf.length;
         this.i = 0;
     }
 
     public Parser(final File file, final int len) throws IOException {
-        this.uXXXX = new StringBuilder(4);
+        this.uXXXX = CharBuffer.allocate(4);
         this.LEN = len;
         this.buf = new char[len];
 //        this.reader = Files.newBufferedReader(file.toPath());
@@ -322,8 +323,8 @@ public class Parser {
                         uXXXX.append(read());
                         uXXXX.append(read());
                         uXXXX.append(read());
+                        uXXXX.rewind();
                         final char xxxx = (char) HexFormat.fromHexDigits(uXXXX);
-                        uXXXX.setLength(0);
                         sb.append(xxxx);
                     }
                     default -> throw new RuntimeException("dunno " + c);
