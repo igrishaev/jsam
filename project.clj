@@ -1,4 +1,4 @@
-(def MIN_JAVA_VERSION "16")
+(def MIN_JAVA_VERSION "17")
 
 (defproject parser-test "0.1.2"
 

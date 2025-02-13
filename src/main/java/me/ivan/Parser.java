@@ -70,16 +70,7 @@ public class Parser {
         return buf[i++];
     }
 
-//    private char peek() {
-////        if (i == LEN) {
-////            readMore();
-////            i = 0;
-////        }
-//        return buf[i];
-//    }
-
     private void unread() {
-//        reader.
         i--;
     }
 
@@ -345,10 +336,6 @@ public class Parser {
         return '1' <= c && c <= '9';
     }
 
-    private static boolean isHex(final char c) {
-        return ('0' <= c && c <= '9') || ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F');
-    }
-
     public static void main(String[] args) throws IOException {
 //        final Parser p = new Parser(new StringReader("[ \"abc\" , \"xyz\" , [\"ccc\" , \"aaa\" ] ]"));
 //        final Parser p = new Parser(new StringReader("  \"abc\u015Cde\"  "));
@@ -361,7 +348,10 @@ public class Parser {
 //        final Parser p = new Parser(new StringReader("  [ true , false, [ true, false ], \"abc\" ] "));
 //        final Parser p = new Parser("  [ true , false, [ true, false ], \"abc\" ] ");
         final Parser p = new Parser(new File("/Users/ivan.grishaev-external/Downloads/100mb.json"), 4096);
+        final long t1 = System.currentTimeMillis();
         p.parse();
+        final long t2 = System.currentTimeMillis();
+        System.out.println(t2 - t1);
 //        System.out.println();
     }
 
