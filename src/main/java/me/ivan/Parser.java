@@ -11,16 +11,24 @@ public class Parser {
     private final char[] buf;
     private CharBuffer uXXXX;
     private int i;
-    private StringBuilder sb;
+    // private StringBuilder sb;
 //    private CharBuffer cbuf;
     private int cbufLen = 0xFF;
     private char[] cbuf;
     private int pos;
+    private int hash;
     private final Map<Integer, String> cache;
-    private boolean overflow;
     private final Map<String, Number> numCache;
 
     private final int LEN;
+
+    private void scaleBuffer() {
+        final int newLen = (int) (cbufLen * 2);
+        char[] newBuf = new char[newLen];
+        System.arraycopy(cbuf, 0, newBuf, 0, cbufLen);
+        this.cbuf = newBuf;
+        this.cbufLen = newLen;
+    }
 
     private static int getHash(final char[] buf, final int off, final int len) {
         int result = 1;
@@ -31,11 +39,11 @@ public class Parser {
     }
 
     public Parser(final String content) {
+        this.hash = 1;
         this.uXXXX = CharBuffer.allocate(4);
         this.buf = content.toCharArray();
         this.LEN = buf.length;
         numCache = new HashMap<>();
-        overflow = false;
         cache = new HashMap<>();
         this.i = 0;
     }
@@ -50,26 +58,34 @@ public class Parser {
 //        this.reader = Files.newBufferedReader(file.toPath());
         this.reader = new FileReader(file);
         this.i = 0;
-        this.sb = new StringBuilder(0xFF);
+        // this.sb = new StringBuilder();
         this.cbuf = new char[cbufLen];
 //        this.cbuf = CharBuffer.allocate(0xFF);
     }
     
     private void reset() {
+        hash = 1;
         pos = 0;
 //        cbuf.clear();
-        sb.setLength(0);
+//        sb.setLength(0);
     }
     
     private void append(final char c) {
-//        cbuf.append(c);
+        hash = 31 * hash + c;
         if (pos < cbufLen) {
             cbuf[pos++] = c;
-
-//            cbuf.append(c);
         } else {
-            sb.append(c);
+            scaleBuffer();
+            cbuf[pos++] = c;
         }
+//        cbuf.append(c);
+//        if (pos < cbufLen) {
+//            cbuf[pos++] = c;
+//
+////            cbuf.append(c);
+//        } else {
+//            sb.append(c);
+//        }
 
     }
 
@@ -87,19 +103,27 @@ public class Parser {
 //                cache.put(hash, result);
 //                return result;
 //            }
-
-        if (sb.isEmpty()) {
-//            return new String(cbuf);
-            final int hash = getHash(cbuf, 0, pos);
-            if (cache.containsKey(hash)) {
+//        final int hash = getHash(cbuf, 0, pos);
+        if (cache.containsKey(hash)) {
                 return cache.get(hash);
             } else {
                 final String result = new String(cbuf, 0, pos);
                 cache.put(hash, result);
                 return result;
             }
-        } else
-            return new String(cbuf) + sb;
+
+//        if (sb.isEmpty()) {
+////            return new String(cbuf);
+//            final int hash = getHash(cbuf, 0, pos);
+//            if (cache.containsKey(hash)) {
+//                return cache.get(hash);
+//            } else {
+//                final String result = new String(cbuf, 0, pos);
+//                cache.put(hash, result);
+//                return result;
+//            }
+//        } else
+//            return new String(cbuf) + sb;
     }
 
     private void readMore() {
