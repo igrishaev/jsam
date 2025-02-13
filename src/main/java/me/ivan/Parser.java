@@ -30,29 +30,7 @@ public class Parser {
         this.i = 0;
         this.sb = new StringBuilder();
     }
-
-    private int charToInt(final char c) {
-        return switch (c) {
-            case '0' -> 0;
-            case '1' -> 1;
-            case '2' -> 2;
-            case '3' -> 3;
-            case '4' -> 4;
-            case '5' -> 5;
-            case '6' -> 6;
-            case '7' -> 7;
-            case '8' -> 8;
-            case '9' -> 9;
-            case 'a', 'A' -> 10;
-            case 'b', 'B' -> 11;
-            case 'c', 'C' -> 12;
-            case 'd', 'D' -> 13;
-            case 'e', 'E' -> 14;
-            case 'f', 'F' -> 15;
-            default -> throw new RuntimeException("wrong char");
-        };
-    }
-
+    
     private void readMore() {
         try {
             reader.read(buf);
