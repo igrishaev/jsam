@@ -108,14 +108,14 @@ public class Parser {
         if (c != '{') {
             throw error("reading object: expected '{' but got '%s'", c);
         }
-        ITransientAssociative map = PersistentArrayMap.EMPTY.asTransient();
         boolean repeat = true;
         ws();
         c = read();
         if (c == '}') {
-            return map.persistent();
+            return PersistentArrayMap.EMPTY;
         }
         unread();
+        ITransientAssociative map = PersistentArrayMap.EMPTY.asTransient();
         while (repeat) {
             ws();
             String key = readString();
@@ -126,7 +126,7 @@ public class Parser {
             }
             ws();
             Object val = readAny();
-            map = map.assoc(key, val);
+            map = map.assoc(Keyword.intern(key), val);
             ws();
             c = read();
             if (c != ',') {
@@ -145,7 +145,6 @@ public class Parser {
         char c;
         Object el;
         boolean repeat = true;
-        ITransientCollection vector = PersistentVector.EMPTY.asTransient();
         ws();
         c = read();
         if (c != '[') {
@@ -154,8 +153,9 @@ public class Parser {
         ws();
         c = read();
         if (c == ']') {
-            return vector.persistent();
+            return PersistentVector.EMPTY;
         }
+        ITransientCollection vector = PersistentVector.EMPTY.asTransient();
         unread();
         while (repeat) {
             el = readAny();

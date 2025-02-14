@@ -19,7 +19,7 @@
   (-> (new Parser content)
       (.parse)))
 
-(defn parse3 [^java.io.File file len]
+(defn parse3 [^java.io.File file]
   (-> (new Parser file)
       (.parse)))
 
@@ -27,16 +27,19 @@
 
   ;; file
   (quick-bench
-      (parse3 (io/file "100mb.json") 8192))
+      (parse3 (io/file "100mb.json")))
 
   ;; file
   (quick-bench
       (json/read-value (io/file "100mb.json")))
 
   (def content
+    (slurp "data.json"))
+
+  (def content-2
     (slurp "data2.json"))
 
-  (def content100mb
+  (def content-100mb
     (slurp "100mb.json"))
 
   ;; string
