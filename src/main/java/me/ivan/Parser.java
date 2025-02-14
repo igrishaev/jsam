@@ -7,6 +7,8 @@ import java.nio.CharBuffer;
 import java.util.*;
 import static me.ivan.ParseError.error;
 
+import clojure.lang.*;
+
 public class Parser {
 
     private int numIntSize = 0;
@@ -99,19 +101,19 @@ public class Parser {
         }
     }
 
-    private Map<String, Object> readObject() {
+    private IPersistentCollection readObject() {
         char c;
         ws();
         c = read();
         if (c != '{') {
             throw error("reading object: expected '{' but got '%s'", c);
         }
-        final Map<String, Object> map = new HashMap<>();
+        ITransientAssociative map = PersistentArrayMap.EMPTY.asTransient();
         boolean repeat = true;
         ws();
         c = read();
         if (c == '}') {
-            return map;
+            return map.persistent();
         }
         unread();
         while (repeat) {
@@ -124,7 +126,7 @@ public class Parser {
             }
             ws();
             Object val = readAny();
-            map.put(key, val);
+            map = map.assoc(key, val);
             ws();
             c = read();
             if (c != ',') {
@@ -136,14 +138,14 @@ public class Parser {
         if (c != '}') {
             throw error("reading object: expected '}' but got '%s'", c);
         }
-        return map;
+        return map.persistent();
     }
 
-    private List<Object> readArray() {
+    private IPersistentCollection readArray() {
         char c;
         Object el;
         boolean repeat = true;
-        final List<Object> list = new ArrayList<>();
+        ITransientCollection vector = PersistentVector.EMPTY.asTransient();
         ws();
         c = read();
         if (c != '[') {
@@ -152,12 +154,12 @@ public class Parser {
         ws();
         c = read();
         if (c == ']') {
-            return list;
+            return vector.persistent();
         }
         unread();
         while (repeat) {
             el = readAny();
-            list.add(el);
+            vector = vector.conj(el);
             ws();
             c = read();
             if (c != ',') {
@@ -169,7 +171,7 @@ public class Parser {
         if (c != ']') {
             throw error("reading array: expected ']' but got '%s'", c);
         }
-        return list;
+        return vector.persistent();
     }
 
     @SuppressWarnings("UnusedReturnValue")
