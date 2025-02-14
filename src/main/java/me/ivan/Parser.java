@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.CharBuffer;
 import java.util.*;
+import static me.ivan.ParseError.error;
 
 public class Parser {
 
@@ -63,7 +64,7 @@ public class Parser {
         try {
             final int r = reader.read(readBuf);
             if (r == -1) {
-                throw new RuntimeException("EOF");
+                throw new EOFException();
             }
             readLen = r;
         } catch (IOException e) {
@@ -99,7 +100,7 @@ public class Parser {
         ws();
         c = read();
         if (c != '{') {
-            throw new RuntimeException("not a map");
+            throw error("reading object: expected '{' but got '%s'", c);
         }
         final Map<String, Object> map = new HashMap<>();
         boolean repeat = true;
@@ -115,7 +116,7 @@ public class Parser {
             ws();
             c = read();
             if (c != ':') {
-                throw new RuntimeException("expected :");
+                throw error("reading object: expected ':' after a key but got '%s'", c);
             }
             ws();
             Object val = readAny();
@@ -129,7 +130,7 @@ public class Parser {
         }
         c = read();
         if (c != '}') {
-            throw new RuntimeException("expected }");
+            throw error("reading object: expected '}' but got '%s'", c);
         }
         return map;
     }
@@ -142,7 +143,7 @@ public class Parser {
         ws();
         c = read();
         if (c != '[') {
-            throw new RuntimeException();
+            throw error("reading array: expected '[' but got '%s'", c);
         }
         ws();
         c = read();
@@ -162,7 +163,7 @@ public class Parser {
         }
         c = read();
         if (c != ']') {
-            throw new RuntimeException();
+            throw error("reading array: expected ']' but got '%s'", c);
         }
         return list;
     }
@@ -185,7 +186,7 @@ public class Parser {
             case '[' -> readArray();
             case '{' -> readObject();
             case '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' -> readNumber();
-            default -> throw new RuntimeException("unknown");
+            default -> throw error("reading any: unexpected character '%s'", c);
         };
     }
 
@@ -195,7 +196,7 @@ public class Parser {
         if (isZeroNine(c)) {
             append(c);
         } else {
-            throw new RuntimeException("expected a digit");
+            throw error("reading digits: expected 0-9 but got '%s'", c);
         }
         while (true) {
             c = read();
@@ -212,10 +213,8 @@ public class Parser {
         numIntSize = 0;
         char c = read();
         if (c == '-') {
-//            numNegative = true;
             append(c);
         } else {
-//            numNegative = false;
             unread();
         }
         c = read();
@@ -236,7 +235,7 @@ public class Parser {
                 }
             }
         } else {
-            throw new RuntimeException("aaa");
+            throw error("reading integer: unexpected character '%s'", c);
         }
 
     }
@@ -265,7 +264,7 @@ public class Parser {
                 append(c);
                 readOneAndMoreDigits();
             } else {
-                throw new RuntimeException("expected sign");
+                throw error("reading exponent: expected -/+ but got '%s'", c);
             }
         } else {
             unread();
@@ -302,26 +301,39 @@ public class Parser {
     }
 
     private boolean readTrue() {
-        if (read() == 't' && read() == 'r' && read() == 'u' && read() == 'e') {
+        final char c1 = read();
+        final char c2 = read();
+        final char c3 = read();
+        final char c4 = read();
+        if (c1 == 't' && c2 == 'r' && c3 == 'u' && c4 == 'e') {
             return true;
         } else {
-            throw new RuntimeException();
+            throw error("reading true literal: unexpected sequence '%s', '%s', '%s', '%s'", c1, c2, c3, c4);
         }
     }
 
     private boolean readFalse() {
-        if (read() == 'f' && read() == 'a' && read() == 'l' && read() == 's' && read() == 'e') {
+        final char c1 = read();
+        final char c2 = read();
+        final char c3 = read();
+        final char c4 = read();
+        final char c5 = read();
+        if (c1 == 'f' && c2 == 'a' && c3 == 'l' && c4 == 's' && c5 == 'e') {
             return false;
         } else {
-            throw new RuntimeException();
+            throw error("reading false literal: unexpected sequence '%s', '%s', '%s', '%s', '%s'", c1, c2, c3, c4, c5);
         }
     }
 
     private Object readNull() {
-        if (read() == 'n' && read() == 'u' && read() == 'l' && read() == 'l') {
+        final char c1 = read();
+        final char c2 = read();
+        final char c3 = read();
+        final char c4 = read();
+        if (c1 == 'n' && c2 == 'u' && c3 == 'l' && c4 == 'l') {
             return null;
         } else {
-            throw new RuntimeException();
+            throw error("reading null literal: unexpected sequence '%s', '%s', '%s', '%s'", c1, c2, c3, c4);
         }
     }
 
@@ -330,7 +342,7 @@ public class Parser {
         char c;
         c = read();
         if (c != '"') {
-            throw new RuntimeException();
+            throw error("reading string: expected '\"' but got '%s'", c);
         }
         while (true) {
             c = read();
@@ -356,7 +368,7 @@ public class Parser {
                         final char cXXXX = (char) HexFormat.fromHexDigits(uXXXX);
                         append(cXXXX);
                     }
-                    default -> throw new RuntimeException("dunno " + c);
+                    default -> throw error("reading escaped: unknown character '%s'", c);
 
                 }
             } else {
