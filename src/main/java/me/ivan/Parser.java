@@ -1,5 +1,10 @@
 package me.ivan;
 
+import clojure.lang.IPersistentMap;
+import clojure.lang.IPersistentVector;
+import clojure.lang.PersistentArrayMap;
+import clojure.lang.PersistentVector;
+
 import java.io.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -99,20 +104,20 @@ public class Parser {
         }
     }
 
-    private Map<String, Object> readObject() {
+    private IPersistentMap readObject() {
         char c;
         ws();
         c = read();
         if (c != '{') {
             throw error("reading object: expected '{' but got '%s'", c);
         }
-        final Map<String, Object> map = new HashMap<>();
         boolean repeat = true;
         ws();
         c = read();
         if (c == '}') {
-            return map;
+            return PersistentArrayMap.EMPTY;
         }
+        final Map<String, Object> map = new HashMap<>();
         unread();
         while (repeat) {
             ws();
@@ -136,14 +141,13 @@ public class Parser {
         if (c != '}') {
             throw error("reading object: expected '}' but got '%s'", c);
         }
-        return map;
+        return PersistentArrayMap.create(map);
     }
 
-    private List<Object> readArray() {
+    private IPersistentVector readArray() {
         char c;
         Object el;
         boolean repeat = true;
-        final List<Object> list = new ArrayList<>();
         ws();
         c = read();
         if (c != '[') {
@@ -152,8 +156,9 @@ public class Parser {
         ws();
         c = read();
         if (c == ']') {
-            return list;
+            return PersistentVector.EMPTY;
         }
+        final List<Object> list = new ArrayList<>();
         unread();
         while (repeat) {
             el = readAny();
@@ -169,7 +174,7 @@ public class Parser {
         if (c != ']') {
             throw error("reading array: expected ']' but got '%s'", c);
         }
-        return list;
+        return PersistentVector.create(list);
     }
 
     @SuppressWarnings("UnusedReturnValue")
