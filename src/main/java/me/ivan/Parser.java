@@ -9,10 +9,8 @@ public class Parser {
     private Reader reader;
     private int bufPos;
     private final char[] buf;
-    private CharBuffer uXXXX;
+    private final CharBuffer uXXXX;
     private int i;
-    // private StringBuilder sb;
-//    private CharBuffer cbuf;
     private int cbufLen = 0xFF;
     private char[] cbuf;
     private int pos;
@@ -20,29 +18,18 @@ public class Parser {
     private final Map<Integer, String> cache;
     private final Map<String, Number> numCache;
 
-    private final int LEN;
-
     private void scaleBuffer() {
-        final int newLen = (int) (cbufLen * 2);
+        final int newLen = cbufLen * 2;
         char[] newBuf = new char[newLen];
         System.arraycopy(cbuf, 0, newBuf, 0, cbufLen);
         this.cbuf = newBuf;
         this.cbufLen = newLen;
     }
 
-    private static int getHash(final char[] buf, final int off, final int len) {
-        int result = 1;
-        for (int i = off; i < len; i++) {
-            result = 31 * result + buf[i];
-        }
-        return result;
-    }
-
     public Parser(final String content) {
         this.hash = 1;
         this.uXXXX = CharBuffer.allocate(4);
         this.buf = content.toCharArray();
-        this.LEN = buf.length;
         numCache = new HashMap<>();
         cache = new HashMap<>();
         this.i = 0;
@@ -51,79 +38,35 @@ public class Parser {
     public Parser(final File file, final int len) throws IOException {
         this.bufPos = 0;
         this.uXXXX = CharBuffer.allocate(4);
-        this.LEN = len;
         numCache = new HashMap<>();
         cache = new HashMap<>();
         this.buf = new char[len];
-//        this.reader = Files.newBufferedReader(file.toPath());
         this.reader = new FileReader(file);
         this.i = 0;
-        // this.sb = new StringBuilder();
         this.cbuf = new char[cbufLen];
-//        this.cbuf = CharBuffer.allocate(0xFF);
     }
     
     private void reset() {
         hash = 1;
         pos = 0;
-//        cbuf.clear();
-//        sb.setLength(0);
     }
     
     private void append(final char c) {
         hash = 31 * hash + c;
-        if (pos < cbufLen) {
-            cbuf[pos++] = c;
-        } else {
+        if (pos >= cbufLen) {
             scaleBuffer();
-            cbuf[pos++] = c;
         }
-//        cbuf.append(c);
-//        if (pos < cbufLen) {
-//            cbuf[pos++] = c;
-//
-////            cbuf.append(c);
-//        } else {
-//            sb.append(c);
-//        }
-
+        cbuf[pos++] = c;
     }
 
     private String getCollected() {
-
-//        return "42";
-
-//        final char[] buf = cbuf.array();
-//        final int off = 0;
-//        final int len = cbuf.position();
-//        final int hash = getHash(buf, off, len);
-//            String s = cache.get(hash);
-//            if {
-//                final String result = "test"; // new String(buf, off, len);
-//                cache.put(hash, result);
-//                return result;
-//            }
-//        final int hash = getHash(cbuf, 0, pos);
         if (cache.containsKey(hash)) {
-                return cache.get(hash);
-            } else {
-                final String result = new String(cbuf, 0, pos);
-                cache.put(hash, result);
-                return result;
-            }
-
-//        if (sb.isEmpty()) {
-////            return new String(cbuf);
-//            final int hash = getHash(cbuf, 0, pos);
-//            if (cache.containsKey(hash)) {
-//                return cache.get(hash);
-//            } else {
-//                final String result = new String(cbuf, 0, pos);
-//                cache.put(hash, result);
-//                return result;
-//            }
-//        } else
-//            return new String(cbuf) + sb;
+            return cache.get(hash);
+        } else {
+            final String result = new String(cbuf, 0, pos);
+            cache.put(hash, result);
+            return result;
+        }
     }
 
     private void readMore() {
@@ -143,7 +86,6 @@ public class Parser {
             readMore();
             i = 0;
         }
-        // TODO: override it
         return buf[i++];
     }
 
@@ -235,6 +177,7 @@ public class Parser {
         return list;
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     public Object parse() {
         readMore();
         return readAny();
@@ -339,15 +282,8 @@ public class Parser {
         if (n == null) {
             n = Double.parseDouble(string);
             numCache.put(string, n);
-            return n;
-        } else {
-            return n;
         }
-//        final Double num = Double.parseDouble(string);
-//        return Integer.parseInt("23423423");
-//        return 42;
-//        sb.setLength(0);
-//        return num;
+        return n;
     }
 
     private boolean readTrue() {
@@ -376,7 +312,6 @@ public class Parser {
 
     private String readString() {
         reset();
-        final String string;
         char c;
         c = read();
         if (c != '"') {
@@ -386,9 +321,6 @@ public class Parser {
             c = read();
             if (c == '"') {
                 return getCollected();
-//                string = sb.toString();
-//                sb.setLength(0);
-//                return string;
             } else if (c == '\\') {
                 c = read();
                 switch (c) {
@@ -406,8 +338,8 @@ public class Parser {
                         uXXXX.append(read());
                         uXXXX.append(read());
                         uXXXX.rewind();
-                        final char xxxx = (char) HexFormat.fromHexDigits(uXXXX);
-                        append(xxxx);
+                        final char cXXXX = (char) HexFormat.fromHexDigits(uXXXX);
+                        append(cXXXX);
                     }
                     default -> throw new RuntimeException("dunno " + c);
 
