@@ -1,11 +1,16 @@
 package me.ivan;
 
 import java.io.*;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.nio.CharBuffer;
 import java.util.*;
 
 public class Parser {
 
+    private int numIntSize = 0;
+    private boolean numHasFrac = false;
+    private boolean numHasExp = false;
     private Reader reader;
     private int bufPos;
     private final char[] buf;
@@ -17,6 +22,7 @@ public class Parser {
     private int hash;
     private final Map<Integer, String> cache;
     private final Map<String, Number> numCache;
+    private int keySize = 0xFF;
 
     private void scaleBuffer() {
         final int newLen = cbufLen * 2;
@@ -45,12 +51,12 @@ public class Parser {
         this.i = 0;
         this.cbuf = new char[cbufLen];
     }
-    
+
     private void reset() {
         hash = 1;
         pos = 0;
     }
-    
+
     private void append(final char c) {
         hash = 31 * hash + c;
         if (pos >= cbufLen) {
@@ -60,13 +66,17 @@ public class Parser {
     }
 
     private String getCollected() {
-        if (cache.containsKey(hash)) {
-            return cache.get(hash);
-        } else {
-            final String result = new String(cbuf, 0, pos);
-            cache.put(hash, result);
-            return result;
-        }
+        return new String(cbuf, 0, pos);
+//        if (pos > keySize) {
+//            new String(cbuf, 0, pos);
+//        }
+//        if (cache.containsKey(hash)) {
+//            return cache.get(hash);
+//        } else {
+//            final String result = new String(cbuf, 0, pos);
+//            cache.put(hash, result);
+//            return result;
+//        }
     }
 
     private void readMore() {
@@ -219,21 +229,27 @@ public class Parser {
     }
 
     private void readInteger() {
+        numIntSize = 0;
         char c = read();
         if (c == '-') {
+//            numNegative = true;
             append(c);
         } else {
+//            numNegative = false;
             unread();
         }
         c = read();
         if (c == '0') {
             append(c);
+            numIntSize++;
         } else if (isOneNine(c)) {
             append(c);
+            numIntSize++;
             while (true) {
                 c = read();
                 if (isZeroNine(c)) {
                     append(c);
+                    numIntSize++;
                 } else {
                     unread();
                     break;
@@ -246,10 +262,12 @@ public class Parser {
     }
 
     private void readFraction() {
+        numHasFrac = false;
         char c;
         c = read();
         if (c == '.') {
             append('.');
+            numHasFrac = true;
             readOneAndMoreDigits();
         } else {
             unread();
@@ -257,8 +275,10 @@ public class Parser {
     }
 
     private void readExponent() {
+        numHasExp = false;
         char c = read();
         if (c == 'e' || c == 'E') {
+            numHasExp = true;
             append(c);
             c = read();
             if (c == '-' || c == '+') {
@@ -278,10 +298,29 @@ public class Parser {
         readFraction();
         readExponent();
         final String string = getCollected();
-        Number n = numCache.get(string);
+//        Number n = numCache.get(string);
+        Number n = null;
         if (n == null) {
-            n = Double.parseDouble(string);
-            numCache.put(string, n);
+            if (!numHasFrac && !numHasExp) {
+                if (numIntSize < 5) {
+                    n = Short.parseShort(string);
+                } else if (numIntSize < 9) {
+                    n = Integer.parseInt(string);
+                } else if (numIntSize < 18) {
+                    n = Long.parseLong(string);
+                } else {
+                    n = new BigInteger(string);
+                }
+            } else {
+                if (numIntSize < 38) {
+                    n = Float.parseFloat(string);
+                } else if (numIntSize < 307) {
+                    n = Double.parseDouble(string);
+                } else {
+                    n = new BigDecimal(string);
+                }
+            }
+//            numCache.put(string, n);
         }
         return n;
     }
