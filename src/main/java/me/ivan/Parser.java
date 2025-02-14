@@ -11,42 +11,37 @@ public class Parser {
     private int numIntSize = 0;
     private boolean numHasFrac = false;
     private boolean numHasExp = false;
-    private Reader reader;
+
+    private final Reader reader;
 
     private final char[] readBuf;
-    private int readLen;
-    private int readPos;
+    private int readLen = 8192;
+    private int readPos = 0;
 
-    private final CharBuffer uXXXX;
-    private int i;
+    private final CharBuffer uXXXX = CharBuffer.allocate(4);
 
     private char[] tempBuf;
-    private int tempLen = 0xFF;
-    private int tempPos;
+    private int tempLen = 255;
+    private int tempPos = 0;
 
     private void scaleBuffer() {
-        final int newSize = tempLen * 2;
-        char[] newBuf = new char[newSize];
-        System.arraycopy(tempBuf, 0, newBuf, 0, tempLen);
+        tempLen = tempLen * 2;
+        char[] newBuf = new char[tempLen];
+        System.arraycopy(tempBuf, 0, newBuf, 0, tempBuf.length);
         this.tempBuf = newBuf;
-        this.tempLen = newSize;
     }
 
     public Parser(final String content) {
-        this.uXXXX = CharBuffer.allocate(4);
         this.readBuf = content.toCharArray();
-        this.i = 0;
+        this.readPos = 0;
+        this.reader = Reader.nullReader();
     }
 
     public Parser(final File file, final int len) throws IOException {
         this.readLen = len;
-        this.readPos = 0;
         this.readBuf = new char[readLen];
-
-        this.uXXXX = CharBuffer.allocate(4);
-        this.reader = new FileReader(file);
-        this.i = 0;
         this.tempBuf = new char[tempLen];
+        this.reader = new FileReader(file);
     }
 
     private void resetTempBuf() {
@@ -70,29 +65,22 @@ public class Parser {
             if (r == -1) {
                 throw new RuntimeException("EOF");
             }
-            readPos = r;
+            readLen = r;
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
 
     private char read() {
-//        if (i == bufPos) {
-//            readMore();
-//            i = 0;
-//        }
-        try {
-            return readBuf[i++];
-        } catch (ArrayIndexOutOfBoundsException e) {
+        if (readPos == readLen) {
             readMore();
-            i = 0;
+            readPos = 0;
         }
-        return readBuf[i++];
-//        return buf[i++];
+        return readBuf[readPos++];
     }
 
     private void unread() {
-        i--;
+        readPos--;
     }
 
     private void ws() {
