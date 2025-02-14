@@ -19,7 +19,7 @@ public class Parser {
     private int cbufLen = 0xFF;
     private char[] cbuf;
     private int pos;
-    private int hash;
+//    private int hash;
     private final Map<Integer, String> cache;
     private final Map<String, Number> numCache;
     private int keySize = 0xFF;
@@ -33,7 +33,7 @@ public class Parser {
     }
 
     public Parser(final String content) {
-        this.hash = 1;
+//        this.hash = 1;
         this.uXXXX = CharBuffer.allocate(4);
         this.buf = content.toCharArray();
         numCache = new HashMap<>();
@@ -53,12 +53,12 @@ public class Parser {
     }
 
     private void reset() {
-        hash = 1;
+//        hash = 1;
         pos = 0;
     }
 
     private void append(final char c) {
-        hash = 31 * hash + c;
+//        hash = 31 * hash + c;
         if (pos >= cbufLen) {
             scaleBuffer();
         }
@@ -92,11 +92,18 @@ public class Parser {
     }
 
     private char read() {
-        if (i == bufPos) {
+//        if (i == bufPos) {
+//            readMore();
+//            i = 0;
+//        }
+        try {
+            return buf[i++];
+        } catch (ArrayIndexOutOfBoundsException e) {
             readMore();
             i = 0;
         }
         return buf[i++];
+//        return buf[i++];
     }
 
     private void unread() {

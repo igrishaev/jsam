@@ -2,7 +2,6 @@
 Files.newBufferedReader + .read() no buffer
 Execution time mean : 340.281693 µs
 
-
 Files.newBufferedReader + inner buffer
 Execution time mean : 158.011501 µs
 
@@ -33,3 +32,9 @@ Execution time mean : 90.646492 µs
 
 100mb
              Execution time mean : 834.746426 ms scaled buffer
+
+100mb
+             Execution time mean : 823.887905 ms no cache, no hash
+
+100mb
+             Execution time mean : 862.119425 ms read try catch
