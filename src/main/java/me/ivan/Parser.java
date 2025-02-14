@@ -19,10 +19,6 @@ public class Parser {
     private int cbufLen = 0xFF;
     private char[] cbuf;
     private int pos;
-//    private int hash;
-    private final Map<Integer, String> cache;
-    private final Map<String, Number> numCache;
-    private int keySize = 0xFF;
 
     private void scaleBuffer() {
         final int newLen = cbufLen * 2;
@@ -36,16 +32,12 @@ public class Parser {
 //        this.hash = 1;
         this.uXXXX = CharBuffer.allocate(4);
         this.buf = content.toCharArray();
-        numCache = new HashMap<>();
-        cache = new HashMap<>();
         this.i = 0;
     }
 
     public Parser(final File file, final int len) throws IOException {
         this.bufPos = 0;
         this.uXXXX = CharBuffer.allocate(4);
-        numCache = new HashMap<>();
-        cache = new HashMap<>();
         this.buf = new char[len];
         this.reader = new FileReader(file);
         this.i = 0;
@@ -58,25 +50,14 @@ public class Parser {
     }
 
     private void append(final char c) {
-//        hash = 31 * hash + c;
         if (pos >= cbufLen) {
             scaleBuffer();
         }
         cbuf[pos++] = c;
     }
 
-    private String getCollected() {
+    private String getCollectedString() {
         return new String(cbuf, 0, pos);
-//        if (pos > keySize) {
-//            new String(cbuf, 0, pos);
-//        }
-//        if (cache.containsKey(hash)) {
-//            return cache.get(hash);
-//        } else {
-//            final String result = new String(cbuf, 0, pos);
-//            cache.put(hash, result);
-//            return result;
-//        }
     }
 
     private void readMore() {
@@ -304,30 +285,26 @@ public class Parser {
         readInteger();
         readFraction();
         readExponent();
-        final String string = getCollected();
-//        Number n = numCache.get(string);
-        Number n = null;
-        if (n == null) {
-            if (!numHasFrac && !numHasExp) {
-                if (numIntSize < 5) {
-                    n = Short.parseShort(string);
-                } else if (numIntSize < 9) {
-                    n = Integer.parseInt(string);
-                } else if (numIntSize < 18) {
-                    n = Long.parseLong(string);
-                } else {
-                    n = new BigInteger(string);
-                }
+        final String string = getCollectedString();
+        Number n;
+        if (!numHasFrac && !numHasExp) {
+            if (numIntSize < 5) {
+                n = Short.parseShort(string);
+            } else if (numIntSize < 9) {
+                n = Integer.parseInt(string);
+            } else if (numIntSize < 18) {
+                n = Long.parseLong(string);
             } else {
-                if (numIntSize < 38) {
-                    n = Float.parseFloat(string);
-                } else if (numIntSize < 307) {
-                    n = Double.parseDouble(string);
-                } else {
-                    n = new BigDecimal(string);
-                }
+                n = new BigInteger(string);
             }
-//            numCache.put(string, n);
+        } else {
+            if (numIntSize < 38) {
+                n = Float.parseFloat(string);
+            } else if (numIntSize < 307) {
+                n = Double.parseDouble(string);
+            } else {
+                n = new BigDecimal(string);
+            }
         }
         return n;
     }
@@ -366,7 +343,7 @@ public class Parser {
         while (true) {
             c = read();
             if (c == '"') {
-                return getCollected();
+                return getCollectedString();
             } else if (c == '\\') {
                 c = read();
                 switch (c) {
