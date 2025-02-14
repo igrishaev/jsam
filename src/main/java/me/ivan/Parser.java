@@ -12,61 +12,65 @@ public class Parser {
     private boolean numHasFrac = false;
     private boolean numHasExp = false;
     private Reader reader;
-    private int bufPos;
-    private final char[] buf;
+
+    private final char[] readBuf;
+    private int readLen;
+    private int readPos;
+
     private final CharBuffer uXXXX;
     private int i;
-    private int cbufLen = 0xFF;
-    private char[] cbuf;
-    private int pos;
+
+    private char[] tempBuf;
+    private int tempLen = 0xFF;
+    private int tempPos;
 
     private void scaleBuffer() {
-        final int newLen = cbufLen * 2;
-        char[] newBuf = new char[newLen];
-        System.arraycopy(cbuf, 0, newBuf, 0, cbufLen);
-        this.cbuf = newBuf;
-        this.cbufLen = newLen;
+        final int newSize = tempLen * 2;
+        char[] newBuf = new char[newSize];
+        System.arraycopy(tempBuf, 0, newBuf, 0, tempLen);
+        this.tempBuf = newBuf;
+        this.tempLen = newSize;
     }
 
     public Parser(final String content) {
-//        this.hash = 1;
         this.uXXXX = CharBuffer.allocate(4);
-        this.buf = content.toCharArray();
+        this.readBuf = content.toCharArray();
         this.i = 0;
     }
 
     public Parser(final File file, final int len) throws IOException {
-        this.bufPos = 0;
+        this.readLen = len;
+        this.readPos = 0;
+        this.readBuf = new char[readLen];
+
         this.uXXXX = CharBuffer.allocate(4);
-        this.buf = new char[len];
         this.reader = new FileReader(file);
         this.i = 0;
-        this.cbuf = new char[cbufLen];
+        this.tempBuf = new char[tempLen];
     }
 
-    private void reset() {
-//        hash = 1;
-        pos = 0;
+    private void resetTempBuf() {
+        tempPos = 0;
     }
 
     private void append(final char c) {
-        if (pos >= cbufLen) {
+        if (tempPos >= tempLen) {
             scaleBuffer();
         }
-        cbuf[pos++] = c;
+        tempBuf[tempPos++] = c;
     }
 
     private String getCollectedString() {
-        return new String(cbuf, 0, pos);
+        return new String(tempBuf, 0, tempPos);
     }
 
     private void readMore() {
         try {
-            final int r = reader.read(buf);
+            final int r = reader.read(readBuf);
             if (r == -1) {
                 throw new RuntimeException("EOF");
             }
-            bufPos = r;
+            readPos = r;
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -78,12 +82,12 @@ public class Parser {
 //            i = 0;
 //        }
         try {
-            return buf[i++];
+            return readBuf[i++];
         } catch (ArrayIndexOutOfBoundsException e) {
             readMore();
             i = 0;
         }
-        return buf[i++];
+        return readBuf[i++];
 //        return buf[i++];
     }
 
@@ -281,7 +285,7 @@ public class Parser {
     }
 
     private Number readNumber() {
-        reset();
+        resetTempBuf();
         readInteger();
         readFraction();
         readExponent();
@@ -334,7 +338,7 @@ public class Parser {
     }
 
     private String readString() {
-        reset();
+        resetTempBuf();
         char c;
         c = read();
         if (c != '"') {
