@@ -5,6 +5,7 @@
   :managed-dependencies
   [[org.clojure/clojure "1.11.1"]
    [metosin/jsonista "0.3.8"]
+   [org.clojure/data.json "2.5.1"]
    [criterium "0.4.6"]]
 
   :dependencies
@@ -14,6 +15,7 @@
   {:dev
    {:dependencies
     [[metosin/jsonista]
+     [org.clojure/data.json]
      [criterium]]
 
     :global-vars

@@ -2,6 +2,7 @@
   (:import me.ivan.Parser)
   (:use criterium.core)
   (:require
+   [clojure.data.json :as data.json]
    [jsonista.core :as json]
    [clojure.java.io :as io]))
 
@@ -33,6 +34,10 @@
   (quick-bench
       (json/read-value (io/file "100mb.json")))
 
+  (quick-bench
+      (with-open [r (io/reader (io/file "100mb.json"))]
+        (data.json/read r)))
+
   (def content
     (slurp "data.json"))
 
@@ -48,6 +53,9 @@
 
   (quick-bench
       (json/read-value content))
+
+  (quick-bench
+      (data.json/read-str content))
 
 
   (json/write-value (io/file "data2.json")
