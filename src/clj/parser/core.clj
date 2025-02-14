@@ -9,6 +9,7 @@
 (set! *warn-on-reflection* true)
 
 
+#_
 (defn parse [src]
   (with-open [in (-> src io/reader)]
     (-> (new Parser in)
@@ -19,7 +20,7 @@
       (.parse)))
 
 (defn parse3 [^java.io.File file len]
-  (-> (new Parser file len)
+  (-> (new Parser file)
       (.parse)))
 
 (comment
@@ -34,6 +35,9 @@
 
   (def content
     (slurp "data2.json"))
+
+  (def content100mb
+    (slurp "100mb.json"))
 
   ;; string
   (quick-bench

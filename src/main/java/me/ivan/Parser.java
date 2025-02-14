@@ -17,7 +17,10 @@ public class Parser {
 
     private final char[] readBuf;
     private int readLen = 8192;
+    private int readOff = 0;
     private int readPos = 0;
+
+    private final int scaleFactor = 2;
 
     private final CharBuffer uXXXX = CharBuffer.allocate(4);
 
@@ -26,7 +29,7 @@ public class Parser {
     private int tempPos = 0;
 
     private void scaleBuffer() {
-        tempLen = tempLen * 2;
+        tempLen = tempLen * scaleFactor;
         char[] newBuf = new char[tempLen];
         System.arraycopy(tempBuf, 0, newBuf, 0, tempBuf.length);
         this.tempBuf = newBuf;
@@ -34,12 +37,13 @@ public class Parser {
 
     public Parser(final String content) {
         this.readBuf = content.toCharArray();
-        this.readPos = 0;
+        this.readLen = readBuf.length;
+        this.readOff = readBuf.length;
         this.reader = Reader.nullReader();
+        this.tempBuf = new char[tempLen];
     }
 
-    public Parser(final File file, final int len) throws IOException {
-        this.readLen = len;
+    public Parser(final File file) throws IOException {
         this.readBuf = new char[readLen];
         this.tempBuf = new char[tempLen];
         this.reader = new FileReader(file);
@@ -66,14 +70,14 @@ public class Parser {
             if (r == -1) {
                 throw new EOFException();
             }
-            readLen = r;
+            readOff = r;
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
 
     private char read() {
-        if (readPos == readLen) {
+        if (readPos == readOff) {
             readMore();
             readPos = 0;
         }
@@ -170,7 +174,6 @@ public class Parser {
 
     @SuppressWarnings("UnusedReturnValue")
     public Object parse() {
-        readMore();
         return readAny();
     }
 
@@ -396,7 +399,7 @@ public class Parser {
 
 //        final Parser p = new Parser(new StringReader("  [ true , false, [ true, false ], \"abc\" ] "));
 //        final Parser p = new Parser("  [ true , false, [ true, false ], \"abc\" ] ");
-        final Parser p = new Parser(new File("100mb.json"), 4096);
+        final Parser p = new Parser(new File("100mb.json"));
         final long t1 = System.currentTimeMillis();
         p.parse();
         final long t2 = System.currentTimeMillis();
