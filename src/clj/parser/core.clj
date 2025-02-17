@@ -2,7 +2,8 @@
   (:import
    [me.ivan Parser JsonWriter]
    [java.io StringWriter]
-   [java.util List Map UUID]
+   [java.util List Map UUID Date]
+   [java.util.regex Pattern]
    [java.time.temporal Temporal]
    [clojure.lang Keyword Symbol])
   (:use criterium.core)
@@ -15,11 +16,20 @@
 (defprotocol IJSON
   (-encode [this writer]))
 
+
 (extend-protocol IJSON
 
   nil
   (-encode [this ^JsonWriter writer]
     (.writeNull writer nil))
+
+  Object
+  (-encode [this ^JsonWriter writer]
+    (throw (ex-info "cannot json-encode" {:this this})))
+
+  Pattern
+  (-encode [this ^JsonWriter writer]
+    (.writeString writer (str this)))
 
   String
   (-encode [this ^JsonWriter writer]
@@ -30,6 +40,10 @@
     (.writeString writer (str this)))
 
   Temporal
+  (-encode [this ^JsonWriter writer]
+    (.writeString writer (str this)))
+
+  Date
   (-encode [this ^JsonWriter writer]
     (.writeString writer (str this)))
 
@@ -112,6 +126,15 @@
 
   (def content-100mb
     (slurp "100mb.json"))
+
+  (def data-100mb
+    (json/read-value content))
+
+  (quick-bench
+      (json/write-value-as-string data-100mb))
+
+  (quick-bench
+      (write-to-string data-100mb))
 
   ;; string
   (quick-bench
