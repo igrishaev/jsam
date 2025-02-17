@@ -101,7 +101,10 @@ public class Parser {
         }
     }
 
-    private IPersistentCollection readObject() {
+    private Object readObject() {
+
+        final IObjectBuilder builder = new HashMapBuilder();
+
         char c;
         ws();
         c = read();
@@ -112,10 +115,9 @@ public class Parser {
         ws();
         c = read();
         if (c == '}') {
-            return PersistentArrayMap.EMPTY;
+            return builder.build();
         }
         unread();
-        ITransientAssociative map = PersistentArrayMap.EMPTY.asTransient();
         while (repeat) {
             ws();
             String key = readString();
@@ -126,7 +128,7 @@ public class Parser {
             }
             ws();
             Object val = readAny();
-            map = map.assoc(Keyword.intern(key), val);
+            builder.append(Keyword.intern(key), val);
             ws();
             c = read();
             if (c != ',') {
@@ -138,10 +140,14 @@ public class Parser {
         if (c != '}') {
             throw error("reading object: expected '}' but got '%s'", c);
         }
-        return map.persistent();
+        return builder.build();
     }
 
-    private IPersistentCollection readArray() {
+    private Object readArray() {
+
+        IArrayBuilder builder = new ArrayListBuilder();
+//        IArrayBuilder builder = new VectorArrayBuilder();
+
         char c;
         Object el;
         boolean repeat = true;
@@ -153,13 +159,12 @@ public class Parser {
         ws();
         c = read();
         if (c == ']') {
-            return PersistentVector.EMPTY;
+            return builder.build();
         }
-        ITransientCollection vector = PersistentVector.EMPTY.asTransient();
         unread();
         while (repeat) {
             el = readAny();
-            vector = vector.conj(el);
+            builder.append(el);
             ws();
             c = read();
             if (c != ',') {
@@ -171,7 +176,7 @@ public class Parser {
         if (c != ']') {
             throw error("reading array: expected ']' but got '%s'", c);
         }
-        return vector.persistent();
+        return builder.build();
     }
 
     @SuppressWarnings("UnusedReturnValue")
