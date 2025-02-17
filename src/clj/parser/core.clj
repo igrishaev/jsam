@@ -1,10 +1,76 @@
 (ns parser.core
-  (:import me.ivan.Parser)
+  (:import
+   [me.ivan Parser JsonWriter]
+   [java.io StringWriter]
+   [java.util List Map UUID]
+   [java.time.temporal Temporal]
+   [clojure.lang Keyword Symbol])
   (:use criterium.core)
   (:require
    [clojure.data.json :as data.json]
    [jsonista.core :as json]
    [clojure.java.io :as io]))
+
+
+(defprotocol IJSON
+  (-encode [this writer]))
+
+(extend-protocol IJSON
+
+  nil
+  (-encode [this ^JsonWriter writer]
+    (.writeNull writer nil))
+
+  String
+  (-encode [this ^JsonWriter writer]
+    (.writeString writer this))
+
+  UUID
+  (-encode [this ^JsonWriter writer]
+    (.writeString writer (str this)))
+
+  Temporal
+  (-encode [this ^JsonWriter writer]
+    (.writeString writer (str this)))
+
+  Boolean
+  (-encode [this ^JsonWriter writer]
+    (.writeBoolean writer this))
+
+  Number
+  (-encode [this ^JsonWriter writer]
+    (.writeNumber writer this))
+
+  List
+  (-encode [this ^JsonWriter writer]
+    (.writeArray writer this))
+
+  Map
+  (-encode [this ^JsonWriter writer]
+    (.writeMap writer this))
+
+  Keyword
+  (-encode [this ^JsonWriter writer]
+    (.writeString writer (-> this str (subs 1))))
+
+  Symbol
+  (-encode [this ^JsonWriter writer]
+    (.writeString writer (str this)))
+
+
+
+  )
+
+
+(defn write-to []
+  )
+
+(defn write-to-string [value]
+  (with-open [out (new StringWriter)
+              jwr (JsonWriter/create out -encode)]
+    (.write jwr value)
+    (.toString out)))
+
 
 
 (set! *warn-on-reflection* true)
