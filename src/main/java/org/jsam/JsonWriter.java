@@ -2,9 +2,7 @@ package org.jsam;
 
 import clojure.lang.IFn;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.io.Writer;
+import java.io.*;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -13,15 +11,32 @@ public class JsonWriter implements AutoCloseable {
 
     private final Writer writer;
     private final IFn fnProtocol;
+    private final Config config;
+    private int level = 0;
+    private final int step = 2;
 
-    private JsonWriter(final Writer writer, final IFn fnProtocol) {
+    private JsonWriter(final Writer writer, final IFn fnProtocol, final Config config) {
         this.writer = writer;
         this.fnProtocol = fnProtocol;
+        this.config = config;
     }
 
     @SuppressWarnings("unused")
     public static JsonWriter create(final Writer writer, final IFn fnProtocol) {
-        return new JsonWriter(writer, fnProtocol);
+        return create(writer, fnProtocol, Config.DEFAULTS);
+    }
+
+    public static JsonWriter create(final Writer writer, final IFn fnProtocol, final Config config) {
+        return new JsonWriter(writer, fnProtocol, config);
+    }
+
+    @SuppressWarnings("unused")
+    public static void writeToWriter(final Writer writer, final IFn fnProtocol, final Object value) {
+        writeToWriter(writer, fnProtocol, value, Config.DEFAULTS);
+    }
+
+    public static void writeToWriter(final Writer writer, final IFn fnProtocol, final Object value, final Config config) {
+        create(writer, fnProtocol, config).write(value);
     }
 
     @SuppressWarnings("unused")
@@ -48,6 +63,14 @@ public class JsonWriter implements AutoCloseable {
         writer.write(value.toString());
     }
 
+    private void printBr() throws IOException {
+        writer.write("\r\n");
+    }
+
+    private void printIndent() throws IOException {
+        writer.write(" ".repeat(step * level));
+    }
+
     @SuppressWarnings("unused")
     public void writeMap(final Map<?, ?> map) throws IOException {
         final int len = map.size();
@@ -56,30 +79,69 @@ public class JsonWriter implements AutoCloseable {
             return;
         }
         int i = 0;
+        final boolean isPretty = config.isPretty();
         writer.write('{');
+        if (isPretty) {
+            level++;
+            printBr();
+        }
         for (Map.Entry<?, ?> kv: map.entrySet()) {
+            if (isPretty) {
+                printIndent();
+            }
             write(kv.getKey());
             writer.write(':');
+            if (isPretty) {
+                writer.write(' ');
+            }
             write(kv.getValue());
             i++;
             if (i < len) {
                 writer.write(',');
             }
+            if (isPretty) {
+                printBr();
+            }
+        }
+        if (isPretty) {
+            level--;
+            printIndent();
         }
         writer.write('}');
+        if (isPretty) {
+            printBr();
+        }
     }
 
     @SuppressWarnings("unused")
     public void writeArray(final Iterable<?> iterable) throws IOException {
+        final boolean isPretty = config.isPretty();
         final Iterator<?> iter = iterable.iterator();
         writer.write("[");
+        if (isPretty) {
+            level++;
+            printBr();
+        }
         while (iter.hasNext()) {
+            if (isPretty) {
+                printIndent();
+            }
             write(iter.next());
             if (iter.hasNext()) {
                 writer.write(',');
             }
+            if (isPretty) {
+                printBr();
+            }
+        }
+        if (isPretty) {
+            level--;
+            printIndent();
         }
         writer.write(']');
+        if (isPretty) {
+            printBr();
+        }
     }
 
     @SuppressWarnings("unused")

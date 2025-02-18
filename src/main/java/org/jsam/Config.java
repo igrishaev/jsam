@@ -7,8 +7,10 @@ public record Config(int readBufSize,
                      int tempBufScaleFactor,
                      int tempBufSize,
                      Charset parserCharset,
+                     Charset writerCharset,
                      Callable<IArrayBuilder> arrayBuilderFactory,
-                     Callable<IObjectBuilder> objectBuilderFactory
+                     Callable<IObjectBuilder> objectBuilderFactory,
+                     boolean isPretty
 ) {
 
     @SuppressWarnings("unused")
@@ -25,8 +27,10 @@ public record Config(int readBufSize,
         private int tempBufScaleFactor = Const.tempBufScaleFactor;
         private int tempBufSize = Const.tempBufSize;
         private Charset parserCharset = Const.parserCharset;
+        private Charset writerCharset = Const.parserCharset;
         private Callable<IArrayBuilder> arrayBuilderFactory = Const.arrayBuilderFactory;
         private Callable<IObjectBuilder> objectBuilderFactory = Const.objectBuilderFactory;
+        private boolean isPretty = Const.isPretty;
 
         @SuppressWarnings("unused")
         public Builder readBufSize(final int readBufSize) {
@@ -53,6 +57,12 @@ public record Config(int readBufSize,
         }
 
         @SuppressWarnings("unused")
+        public Builder writerCharset(final Charset writerCharset) {
+            this.writerCharset = writerCharset;
+            return this;
+        }
+
+        @SuppressWarnings("unused")
         public Builder arrayBuilderFactory(final Callable<IArrayBuilder> arrayBuilderFactory) {
             this.arrayBuilderFactory = arrayBuilderFactory;
             return this;
@@ -65,14 +75,22 @@ public record Config(int readBufSize,
         }
 
         @SuppressWarnings("unused")
+        public Builder isPretty(final boolean isPretty) {
+            this.isPretty = isPretty;
+            return this;
+        }
+
+        @SuppressWarnings("unused")
         public Config build() {
             return new Config(
                     readBufSize,
                     tempBufScaleFactor,
                     tempBufSize,
                     parserCharset,
+                    writerCharset,
                     arrayBuilderFactory,
-                    objectBuilderFactory
+                    objectBuilderFactory,
+                    isPretty
             );
         }
     }

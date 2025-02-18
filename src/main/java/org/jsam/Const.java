@@ -11,4 +11,5 @@ public class Const {
     public static final Charset parserCharset = StandardCharsets.UTF_8;
     public static final Callable<IArrayBuilder> arrayBuilderFactory = ArrayListBuilder::new;
     public static final Callable<IObjectBuilder> objectBuilderFactory = HashMapBuilder::new;
+    public static boolean isPretty = false;
 }

@@ -1,6 +1,6 @@
 (ns parser.core
   (:import
-   [me.ivan Parser JsonWriter]
+   [org.jsam JsonParser JsonWriter Config]
    [java.io StringWriter]
    [java.util List Map UUID Date]
    [java.util.regex Pattern]
@@ -79,9 +79,15 @@
 (defn write-to []
   )
 
+(def CFG
+  (-> (Config/builder)
+      (.isPretty true)
+      (.build)
+      ))
+
 (defn write-to-string [value]
   (with-open [out (new StringWriter)
-              jwr (JsonWriter/create out -encode)]
+              jwr (JsonWriter/create out -encode CFG)]
     (.write jwr value)
     (.toString out)))
 
@@ -98,12 +104,12 @@
 
 (defn parse2 [^String content]
   (-> content
-      (Parser/fromString)
+      (JsonParser/fromString)
       (.parse)))
 
 (defn parse3 [^java.io.File file]
   (-> file
-      (Parser/fromFile)
+      (JsonParser/fromFile)
       (.parse)))
 
 (comment
