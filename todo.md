@@ -1,9 +1,6 @@
 
 rollback writeArray(List)?
 
-rename the project
-rename classes (parser, reader, error)
-
 encode:
 - java.time
 - regex
@@ -14,9 +11,6 @@ encode:
 - macro to extend custom
 
 pretty print?
-
-reader config
-parser config
 
 writer dest:
 - string

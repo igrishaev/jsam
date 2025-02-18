@@ -1,4 +1,4 @@
-package me.ivan;
+package org.jsam;
 
 import java.io.*;
 import java.math.BigDecimal;
@@ -6,11 +6,11 @@ import java.math.BigInteger;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.util.*;
-import java.util.function.Supplier;
+import java.util.concurrent.Callable;
 
-import static me.ivan.ParseError.error;
+import static org.jsam.Error.error;
 
-public class Parser {
+public class JsonParser {
 
     private int numIntSize = 0;
     private boolean numHasFrac = false;
@@ -29,12 +29,12 @@ public class Parser {
     private int tempLen;
     private int tempPos = 0;
 
-    private final Supplier<IArrayBuilder> arrayBuilderFactory;
-    private final Supplier<IObjectBuilder> objectBuilderFactory;
+    private final Callable<IArrayBuilder> arrayBuilderFactory;
+    private final Callable<IObjectBuilder> objectBuilderFactory;
 
     private final Config config;
 
-    private Parser(final Config config, final Reader reader, final char[] readBuf) {
+    private JsonParser(final Config config, final Reader reader, final char[] readBuf) {
         this.reader = reader;
         this.config = config;
         if (readBuf == null) {
@@ -51,59 +51,59 @@ public class Parser {
     }
 
     @SuppressWarnings("unused")
-    public static Parser fromReader(final Reader reader) {
+    public static JsonParser fromReader(final Reader reader) {
         return fromReader(reader, Config.DEFAULTS);
     }
 
-    public static Parser fromReader(final Reader reader, final Config config) {
-        return new Parser(config, reader, null);
+    public static JsonParser fromReader(final Reader reader, final Config config) {
+        return new JsonParser(config, reader, null);
     }
 
     @SuppressWarnings("unused")
-    public static Parser fromInputStream(final InputStream inputStream) {
+    public static JsonParser fromInputStream(final InputStream inputStream) {
         return fromInputStream(inputStream, Config.DEFAULTS);
     }
 
-    public static Parser fromInputStream(final InputStream inputStream, final Config config) {
+    public static JsonParser fromInputStream(final InputStream inputStream, final Config config) {
         final Charset charset = config.parserCharset();
         final Reader reader = new InputStreamReader(inputStream, charset);
-        return new Parser(config, reader, null);
+        return new JsonParser(config, reader, null);
     }
 
     @SuppressWarnings("unused")
-    public static Parser fromFile(final File file) throws IOException {
+    public static JsonParser fromFile(final File file) throws IOException {
         return fromFile(file, Config.DEFAULTS);
     }
 
-    public static Parser fromFile(final File file, final Config config) throws IOException {
+    public static JsonParser fromFile(final File file, final Config config) throws IOException {
         final Reader reader = new FileReader(file, config.parserCharset());
-        return new Parser(config, reader, null);
+        return new JsonParser(config, reader, null);
     }
 
     @SuppressWarnings("unused")
-    public static Parser fromChars(final char[] chars) {
+    public static JsonParser fromChars(final char[] chars) {
         return fromChars(chars, Config.DEFAULTS);
     }
 
-    public static Parser fromChars(final char[] chars, final Config config) {
-        return new Parser(config, Reader.nullReader(), chars);
+    public static JsonParser fromChars(final char[] chars, final Config config) {
+        return new JsonParser(config, Reader.nullReader(), chars);
     }
 
     @SuppressWarnings("unused")
-    public static Parser fromString(final String string) {
+    public static JsonParser fromString(final String string) {
         return fromString(string, Config.DEFAULTS);
     }
 
-    public static Parser fromString(final String string, final Config config) {
+    public static JsonParser fromString(final String string, final Config config) {
         return fromChars(string.toCharArray(), config);
     }
 
     @SuppressWarnings("unused")
-    public static Parser fromBytes(final byte[] bytes) {
+    public static JsonParser fromBytes(final byte[] bytes) {
         return fromBytes(bytes, Config.DEFAULTS);
     }
 
-    public static Parser fromBytes(final byte[] bytes, final Config config) {
+    public static JsonParser fromBytes(final byte[] bytes, final Config config) {
         final String string = new String(bytes, config.parserCharset());
         return fromString(string, config);
     }
@@ -171,14 +171,18 @@ public class Parser {
     }
 
     private Object readObject() {
-
         char c;
         ws();
         c = read();
         if (c != '{') {
             throw error("reading object: expected '{' but got '%s'", c);
         }
-        final IObjectBuilder builder = objectBuilderFactory.get();
+        final IObjectBuilder builder;
+        try {
+            builder = objectBuilderFactory.call();
+        } catch (Exception e) {
+            throw error(e, "failed to get an object builder");
+        }
         boolean repeat = true;
         ws();
         c = read();
@@ -220,7 +224,12 @@ public class Parser {
         if (c != '[') {
             throw error("reading array: expected '[' but got '%s'", c);
         }
-        final IArrayBuilder builder = arrayBuilderFactory.get();
+        final IArrayBuilder builder;
+        try {
+            builder = arrayBuilderFactory.call();
+        } catch (Exception e) {
+            throw error(e, "failed to get an array builder");
+        }
         ws();
         c = read();
         if (c == ']') {
@@ -470,7 +479,7 @@ public class Parser {
 
 //        final Parser p = new Parser(new StringReader("  [ true , false, [ true, false ], \"abc\" ] "));
 //        final Parser p = Parser.fromString("  [ true , false, [ true, false ], \"abc\" ] ");
-        final Parser p = Parser.fromFile(new File("100mb.json"));
+        final JsonParser p = JsonParser.fromFile(new File("100mb.json"));
         final long t1 = System.currentTimeMillis();
         p.parse();
         final long t2 = System.currentTimeMillis();

@@ -1,4 +1,4 @@
-package me.ivan;
+package org.jsam;
 
 import java.util.ArrayList;
 import java.util.List;

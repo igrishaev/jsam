@@ -1,4 +1,4 @@
-package me.ivan;
+package org.jsam;
 
 import clojure.lang.ITransientCollection;
 import clojure.lang.PersistentVector;

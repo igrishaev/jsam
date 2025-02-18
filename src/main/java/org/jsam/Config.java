@@ -1,16 +1,15 @@
-package me.ivan;
+package org.jsam;
 
 import java.nio.charset.Charset;
-import java.util.function.Supplier;
+import java.util.concurrent.Callable;
 
 public record Config(int readBufSize,
                      int tempBufScaleFactor,
                      int tempBufSize,
                      Charset parserCharset,
-                     Supplier<IArrayBuilder> arrayBuilderFactory,
-                     Supplier<IObjectBuilder> objectBuilderFactory
+                     Callable<IArrayBuilder> arrayBuilderFactory,
+                     Callable<IObjectBuilder> objectBuilderFactory
 ) {
-
 
     @SuppressWarnings("unused")
     public static Config DEFAULTS = builder().build();
@@ -26,8 +25,8 @@ public record Config(int readBufSize,
         private int tempBufScaleFactor = Const.tempBufScaleFactor;
         private int tempBufSize = Const.tempBufSize;
         private Charset parserCharset = Const.parserCharset;
-        private Supplier<IArrayBuilder> arrayBuilderFactory = Const.arrayBuilderFactory;
-        private Supplier<IObjectBuilder> objectBuilderFactory = Const.objectBuilderFactory;
+        private Callable<IArrayBuilder> arrayBuilderFactory = Const.arrayBuilderFactory;
+        private Callable<IObjectBuilder> objectBuilderFactory = Const.objectBuilderFactory;
 
         @SuppressWarnings("unused")
         public Builder readBufSize(final int readBufSize) {
@@ -54,13 +53,13 @@ public record Config(int readBufSize,
         }
 
         @SuppressWarnings("unused")
-        public Builder arrayBuilderFactory(final Supplier<IArrayBuilder> arrayBuilderFactory) {
+        public Builder arrayBuilderFactory(final Callable<IArrayBuilder> arrayBuilderFactory) {
             this.arrayBuilderFactory = arrayBuilderFactory;
             return this;
         }
 
         @SuppressWarnings("unused")
-        public Builder objectBuilderFactory(final Supplier<IObjectBuilder> objectBuilderFactory) {
+        public Builder objectBuilderFactory(final Callable<IObjectBuilder> objectBuilderFactory) {
             this.objectBuilderFactory = objectBuilderFactory;
             return this;
         }
