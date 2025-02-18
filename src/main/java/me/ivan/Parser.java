@@ -6,6 +6,8 @@ import java.math.BigInteger;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.util.*;
+import java.util.function.Supplier;
+
 import static me.ivan.ParseError.error;
 
 public class Parser {
@@ -28,8 +30,11 @@ public class Parser {
     private int tempLen;
     private int tempPos = 0;
 
-    private final Config config;
+    private final Supplier<IArrayBuilder> arrayBuilderFactory;
+    private final Supplier<IObjectBuilder> objectBuilderFactory;
 
+    private final Config config;
+    
     private Parser(final Reader reader, final Config config) {
         this.reader = reader;
         this.config = config;
@@ -38,6 +43,8 @@ public class Parser {
         this.tempBufScaleFactor = config.tempBufScaleFactor();
         this.tempLen = config.tempBufSize();
         this.tempBuf = new char[tempLen];
+        this.arrayBuilderFactory = config().arrayBuilderFactory();
+        this.objectBuilderFactory = config().objectBuilderFactory();
     }
 
     private Parser(char[] payload, final Config config) {
@@ -49,6 +56,8 @@ public class Parser {
         this.tempBufScaleFactor = config.tempBufScaleFactor();
         this.tempLen = config.tempBufSize();
         this.tempBuf = new char[tempLen];
+        this.arrayBuilderFactory = config().arrayBuilderFactory();
+        this.objectBuilderFactory = config().objectBuilderFactory();
     }
 
     @SuppressWarnings("unused")
@@ -173,14 +182,13 @@ public class Parser {
 
     private Object readObject() {
 
-        final IObjectBuilder builder = new HashMapBuilder();
-
         char c;
         ws();
         c = read();
         if (c != '{') {
             throw error("reading object: expected '{' but got '%s'", c);
         }
+        final IObjectBuilder builder = objectBuilderFactory.get();
         boolean repeat = true;
         ws();
         c = read();
@@ -214,10 +222,6 @@ public class Parser {
     }
 
     private Object readArray() {
-
-        IArrayBuilder builder = new ArrayListBuilder();
-//        IArrayBuilder builder = new VectorArrayBuilder();
-
         char c;
         Object el;
         boolean repeat = true;
@@ -226,6 +230,7 @@ public class Parser {
         if (c != '[') {
             throw error("reading array: expected '[' but got '%s'", c);
         }
+        final IArrayBuilder builder = arrayBuilderFactory.get();
         ws();
         c = read();
         if (c == ']') {
@@ -317,7 +322,6 @@ public class Parser {
         } else {
             throw error("reading integer: unexpected character '%s'", c);
         }
-
     }
 
     private void readFraction() {
@@ -465,7 +469,7 @@ public class Parser {
         return '1' <= c && c <= '9';
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
 //        final Parser p = new Parser(new StringReader("[ \"abc\" , \"xyz\" , [\"ccc\" , \"aaa\" ] ]"));
 //        final Parser p = new Parser(new StringReader("  \"abc\u015Cde\"  "));
 //        final Parser p = new Parser(new StringReader("[ 1, 2, 3, 3, 4, 1.3, {\"foo\" : 100} , 2 ] "));

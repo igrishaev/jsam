@@ -1,13 +1,14 @@
 package me.ivan;
 
 import java.nio.charset.Charset;
-
-import static me.ivan.Const.parserCharset;
+import java.util.function.Supplier;
 
 public record Config(int readBufSize,
                      int tempBufScaleFactor,
                      int tempBufSize,
-                     Charset parserCharset
+                     Charset parserCharset,
+                     Supplier<IArrayBuilder> arrayBuilderFactory,
+                     Supplier<IObjectBuilder> objectBuilderFactory
 ) {
 
 
@@ -25,6 +26,8 @@ public record Config(int readBufSize,
         private int tempBufScaleFactor = Const.tempBufScaleFactor;
         private int tempBufSize = Const.tempBufSize;
         private Charset parserCharset = Const.parserCharset;
+        private Supplier<IArrayBuilder> arrayBuilderFactory = Const.arrayBuilderFactory;
+        private Supplier<IObjectBuilder> objectBuilderFactory = Const.objectBuilderFactory;
 
         @SuppressWarnings("unused")
         public Builder readBufSize(final int readBufSize) {
@@ -51,8 +54,27 @@ public record Config(int readBufSize,
         }
 
         @SuppressWarnings("unused")
+        public Builder arrayBuilderFactory(final Supplier<IArrayBuilder> arrayBuilderFactory) {
+            this.arrayBuilderFactory = arrayBuilderFactory;
+            return this;
+        }
+
+        @SuppressWarnings("unused")
+        public Builder objectBuilderFactory(final Supplier<IObjectBuilder> objectBuilderFactory) {
+            this.objectBuilderFactory = objectBuilderFactory;
+            return this;
+        }
+
+        @SuppressWarnings("unused")
         public Config build() {
-            return new Config(readBufSize, tempBufScaleFactor, tempBufSize, parserCharset);
+            return new Config(
+                    readBufSize,
+                    tempBufScaleFactor,
+                    tempBufSize,
+                    parserCharset,
+                    arrayBuilderFactory,
+                    objectBuilderFactory
+            );
         }
     }
 }

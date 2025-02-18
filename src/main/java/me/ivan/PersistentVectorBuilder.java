@@ -3,7 +3,7 @@ package me.ivan;
 import clojure.lang.ITransientCollection;
 import clojure.lang.PersistentVector;
 
-public class VectorArrayBuilder implements IArrayBuilder {
+public class PersistentVectorBuilder implements IArrayBuilder {
 
     private ITransientCollection vector = PersistentVector.EMPTY.asTransient();
 

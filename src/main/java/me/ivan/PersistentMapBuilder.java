@@ -2,7 +2,7 @@ package me.ivan;
 
 import clojure.lang.*;
 
-public class ClojureMapBuilder implements IObjectBuilder {
+public class PersistentMapBuilder implements IObjectBuilder {
 
     private ITransientMap map = PersistentArrayMap.EMPTY.asTransient();
 
