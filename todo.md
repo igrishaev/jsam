@@ -1,7 +1,16 @@
 
+keep java reader?
 rollback writeArray(List)?
 
-encode:
+move number decoding into a separate method
+
+create clojure api ns
+- write
+- write-to-string
+- read
+- read-from-string
+
+test encode:
 - java.time
 - regex
 - all arrays
@@ -10,9 +19,7 @@ encode:
 - macro to extend as string
 - macro to extend custom
 
-pretty print?
-
-writer dest:
+test writer dest:
 - string
 - char[]
 - byte[]
@@ -43,5 +50,3 @@ benchmarks:
 - vs data.json
 - vs charred
 - vs jsonista
-
-keep java reader?
