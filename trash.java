@@ -1235,3 +1235,21 @@ final Parser p = new Parser(new StringReader(" {\n" +
                 "        }\n" +
                 "    ]\n" +
                 "} "));
+
+
+
+//        if (value == null) {
+//            writeNull(null);
+//        } else if (value instanceof Boolean b) {
+//            writeBoolean(b);
+//        } else if (value instanceof String s) {
+//            writeString(s);
+//        } else if (value instanceof Number n) {
+//            writeNumber(n);
+//        } else if (value instanceof Iterable<?> i) {
+//            writeArray(i);
+//        } else if (value instanceof Map<?,?> m) {
+//            writeMap(m);
+//        } else {
+//            throw error("unsupported value: %s", value);
+//        }

@@ -5,9 +5,9 @@ import clojure.lang.IFn;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import static me.ivan.ParseError.error;
 
 public class JsonWriter implements AutoCloseable {
 
@@ -25,29 +25,16 @@ public class JsonWriter implements AutoCloseable {
     }
 
     @SuppressWarnings("unused")
-    public void write(final Object value) throws IOException {
+    public void write(final Object value) {
         fnProtocol.invoke(value, this);
-//        if (value == null) {
-//            writeNull(null);
-//        } else if (value instanceof Boolean b) {
-//            writeBoolean(b);
-//        } else if (value instanceof String s) {
-//            writeString(s);
-//        } else if (value instanceof Number n) {
-//            writeNumber(n);
-//        } else if (value instanceof List<?> l) {
-//            writeArray(l);
-//        } else if (value instanceof Map<?,?> m) {
-//            writeMap(m);
-//        } else {
-//            throw error("unsupported value: %s", value);
-//        }
     }
 
+    @SuppressWarnings("unused")
     public void writeNull(final Object ignored) throws IOException {
         writer.write("null");
     }
 
+    @SuppressWarnings("unused")
     public void writeBoolean(final Boolean value) throws IOException {
         if (value) {
             writer.write("true");
@@ -56,10 +43,12 @@ public class JsonWriter implements AutoCloseable {
         }
     }
 
+    @SuppressWarnings("unused")
     public void writeNumber(final Number value) throws IOException {
         writer.write(value.toString());
     }
 
+    @SuppressWarnings("unused")
     public void writeMap(final Map<?, ?> map) throws IOException {
         final int len = map.size();
         if (len == 0) {
@@ -80,24 +69,20 @@ public class JsonWriter implements AutoCloseable {
         writer.write('}');
     }
 
-    public void writeArray(final List<?> list) throws IOException {
-        final int len = list.size();
-        int i = 0;
-        if (len == 0) {
-            writer.write("[]");
-            return;
-        }
+    @SuppressWarnings("unused")
+    public void writeArray(final Iterable<?> iterable) throws IOException {
+        final Iterator<?> iter = iterable.iterator();
         writer.write("[");
-        for (Object el: list) {
-            write(el);
-            i++;
-            if (i < len) {
+        while (iter.hasNext()) {
+            write(iter.next());
+            if (iter.hasNext()) {
                 writer.write(',');
             }
         }
         writer.write(']');
     }
 
+    @SuppressWarnings("unused")
     public void writeString(final String value) throws IOException {
         final int len = value.length();
         char c;
@@ -128,7 +113,7 @@ public class JsonWriter implements AutoCloseable {
         writer.close();
     }
 
-    public static void main(final String... args) throws IOException {
+    public static void main(final String... args) {
         StringWriter writer = new StringWriter();
         create(writer, null).write(List.of(1, 2, 3, Map.of("test", 1, "hello", List.of(1,2,3)),  true, List.of(-1.33, "sdf\tsdf", false), false));
         System.out.println(writer);
