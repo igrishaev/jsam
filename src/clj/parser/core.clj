@@ -97,11 +97,13 @@
         (.parse))))
 
 (defn parse2 [^String content]
-  (-> (new Parser content)
+  (-> content
+      (Parser/fromString)
       (.parse)))
 
 (defn parse3 [^java.io.File file]
-  (-> (new Parser file)
+  (-> file
+      (Parser/fromFile)
       (.parse)))
 
 (comment

@@ -1,4 +1,6 @@
 
+rollback writeArray(List)?
+
 rename the project
 rename classes (parser, reader, error)
 
