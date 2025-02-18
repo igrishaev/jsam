@@ -19,7 +19,6 @@ public class Parser {
     private final Reader reader;
 
     private final char[] readBuf;
-    private final int readLen;
     private int readOff = 0;
     private int readPos = 0;
 
@@ -34,25 +33,16 @@ public class Parser {
     private final Supplier<IObjectBuilder> objectBuilderFactory;
 
     private final Config config;
-    
-    private Parser(final Reader reader, final Config config) {
+
+    private Parser(final Config config, final Reader reader, final char[] readBuf) {
         this.reader = reader;
         this.config = config;
-        this.readLen = config.readBufSize();
-        this.readBuf = new char[readLen];
-        this.tempBufScaleFactor = config.tempBufScaleFactor();
-        this.tempLen = config.tempBufSize();
-        this.tempBuf = new char[tempLen];
-        this.arrayBuilderFactory = config().arrayBuilderFactory();
-        this.objectBuilderFactory = config().objectBuilderFactory();
-    }
-
-    private Parser(char[] payload, final Config config) {
-        this.reader = Reader.nullReader();
-        this.config = config;
-        this.readLen = payload.length;
-        this.readOff = payload.length;
-        this.readBuf = payload;
+        if (readBuf == null) {
+            this.readBuf = new char[config.readBufSize()];
+        } else {
+            this.readBuf = readBuf;
+            this.readOff = readBuf.length;
+        }
         this.tempBufScaleFactor = config.tempBufScaleFactor();
         this.tempLen = config.tempBufSize();
         this.tempBuf = new char[tempLen];
@@ -66,7 +56,7 @@ public class Parser {
     }
 
     public static Parser fromReader(final Reader reader, final Config config) {
-        return new Parser(reader, config);
+        return new Parser(config, reader, null);
     }
 
     @SuppressWarnings("unused")
@@ -77,7 +67,7 @@ public class Parser {
     public static Parser fromInputStream(final InputStream inputStream, final Config config) {
         final Charset charset = config.parserCharset();
         final Reader reader = new InputStreamReader(inputStream, charset);
-        return new Parser(reader, config);
+        return new Parser(config, reader, null);
     }
 
     @SuppressWarnings("unused")
@@ -87,7 +77,7 @@ public class Parser {
 
     public static Parser fromFile(final File file, final Config config) throws IOException {
         final Reader reader = new FileReader(file, config.parserCharset());
-        return new Parser(reader, config);
+        return new Parser(config, reader, null);
     }
 
     @SuppressWarnings("unused")
@@ -96,7 +86,7 @@ public class Parser {
     }
 
     public static Parser fromChars(final char[] chars, final Config config) {
-        return new Parser(chars, config);
+        return new Parser(config, Reader.nullReader(), chars);
     }
 
     @SuppressWarnings("unused")
@@ -469,7 +459,7 @@ public class Parser {
         return '1' <= c && c <= '9';
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
 //        final Parser p = new Parser(new StringReader("[ \"abc\" , \"xyz\" , [\"ccc\" , \"aaa\" ] ]"));
 //        final Parser p = new Parser(new StringReader("  \"abc\u015Cde\"  "));
 //        final Parser p = new Parser(new StringReader("[ 1, 2, 3, 3, 4, 1.3, {\"foo\" : 100} , 2 ] "));
@@ -479,8 +469,8 @@ public class Parser {
 
 
 //        final Parser p = new Parser(new StringReader("  [ true , false, [ true, false ], \"abc\" ] "));
-        final Parser p = Parser.fromString("  [ true , false, [ true, false ], \"abc\" ] ");
-//        final Parser p = Parser.fromFile(new File("100mb.json"));
+//        final Parser p = Parser.fromString("  [ true , false, [ true, false ], \"abc\" ] ");
+        final Parser p = Parser.fromFile(new File("100mb.json"));
         final long t1 = System.currentTimeMillis();
         p.parse();
         final long t2 = System.currentTimeMillis();
