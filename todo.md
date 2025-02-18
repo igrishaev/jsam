@@ -16,16 +16,6 @@ pretty print?
 reader config
 parser config
 
-reader source:
-- string
-- char[]
-- byte[]
-- file
-- input stream
-- reader
-- socket
-- url/uri
-
 writer dest:
 - string
 - char[]
