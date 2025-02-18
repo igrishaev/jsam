@@ -8,7 +8,7 @@ public class ArrayListBuilder implements IArrayBuilder {
     private final List<Object> list = new ArrayList<>();
 
     @Override
-    public void append(final Object el) {
+    public void conj(final Object el) {
         list.add(el);
     }
 

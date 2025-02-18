@@ -4,10 +4,9 @@ import java.io.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.CharBuffer;
+import java.nio.charset.Charset;
 import java.util.*;
 import static me.ivan.ParseError.error;
-
-import clojure.lang.*;
 
 public class Parser {
 
@@ -18,37 +17,90 @@ public class Parser {
     private final Reader reader;
 
     private final char[] readBuf;
-    private int readLen = 8192;
+    private int readLen;
     private int readOff = 0;
     private int readPos = 0;
-
-    private final int scaleFactor = 2;
 
     private final CharBuffer uXXXX = CharBuffer.allocate(4);
 
     private char[] tempBuf;
-    private int tempLen = 255;
+    private final int tempBufScaleFactor;
+    private int tempLen;
     private int tempPos = 0;
 
+    private final Config config;
+
+    private Parser(final Reader reader, final Config config) {
+        this.reader = reader;
+        this.config = config;
+        this.readLen = config.readBufSize();
+        this.readBuf = new char[readLen];
+        this.tempBufScaleFactor = config.tempBufScaleFactor();
+        this.tempLen = config.tempBufSize();
+        this.tempBuf = new char[tempLen];
+    }
+
+    @SuppressWarnings("unused")
+    public static Parser fromReader(final Reader reader) {
+        return fromReader(reader, Config.DEFAULTS);
+    }
+
+    public static Parser fromReader(final Reader reader, final Config config) {
+        return new Parser(reader, config);
+    }
+
+    public static Parser fromInputStream(final InputStream inputStream) {
+        return fromInputStream(inputStream, Config.DEFAULTS);
+    }
+
+    public static Parser fromInputStream(final InputStream inputStream, final Config config) {
+        final Charset charset = config.parserCharset();
+        final Reader reader = new InputStreamReader(inputStream, charset);
+        return new Parser(reader, config);
+    }
+
+    public static Parser fromFile(final File file) throws IOException {
+        return fromFile(file, Config.DEFAULTS);
+    }
+
+    public static Parser fromFile(final File file, final Config config) throws IOException {
+        final Reader reader = new FileReader(file, config.parserCharset());
+        return new Parser(reader, config);
+    }
+
+    public static Parser fromString(final String string) {
+        return fromString(string, Config.DEFAULTS);
+    }
+
+    public static Parser fromString(final String string, final Config config) {
+        // special case
+        return new Parser(Reader.nullReader(), config);
+    }
+
+//    public Parser(final String content) {
+//        this.config = Config.DEFAULTS;
+//        this.readBuf = content.toCharArray();
+//        this.readLen = readBuf.length;
+//        this.readOff = readBuf.length;
+//        this.reader = Reader.nullReader();
+//        this.tempBuf = new char[tempLen];
+//    }
+
+//    public Parser(final File file) throws IOException {
+//        this.readBuf = new char[readLen];
+//        this.tempBuf = new char[tempLen];
+//        this.reader = new FileReader(file);
+//    }
+
+    public Config config() {
+        return config;
+    }
+
     private void scaleBuffer() {
-        tempLen = tempLen * scaleFactor;
+        tempLen = tempLen * tempBufScaleFactor;
         char[] newBuf = new char[tempLen];
         System.arraycopy(tempBuf, 0, newBuf, 0, tempBuf.length);
         this.tempBuf = newBuf;
-    }
-
-    public Parser(final String content) {
-        this.readBuf = content.toCharArray();
-        this.readLen = readBuf.length;
-        this.readOff = readBuf.length;
-        this.reader = Reader.nullReader();
-        this.tempBuf = new char[tempLen];
-    }
-
-    public Parser(final File file) throws IOException {
-        this.readBuf = new char[readLen];
-        this.tempBuf = new char[tempLen];
-        this.reader = new FileReader(file);
     }
 
     private void resetTempBuf() {
@@ -128,7 +180,7 @@ public class Parser {
             }
             ws();
             Object val = readAny();
-            builder.append(Keyword.intern(key), val);
+            builder.assoc(key, val);
             ws();
             c = read();
             if (c != ',') {
@@ -164,7 +216,7 @@ public class Parser {
         unread();
         while (repeat) {
             el = readAny();
-            builder.append(el);
+            builder.conj(el);
             ws();
             c = read();
             if (c != ',') {

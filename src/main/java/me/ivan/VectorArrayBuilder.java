@@ -8,7 +8,7 @@ public class VectorArrayBuilder implements IArrayBuilder {
     private ITransientCollection vector = PersistentVector.EMPTY.asTransient();
 
     @Override
-    public void append(final Object el) {
+    public void conj(final Object el) {
         vector = vector.conj(el);
     }
 

@@ -94,7 +94,6 @@ public class JsonWriter implements AutoCloseable {
             if (i < len) {
                 writer.write(',');
             }
-
         }
         writer.write(']');
     }
