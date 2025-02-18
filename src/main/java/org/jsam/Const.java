@@ -12,4 +12,5 @@ public class Const {
     public static final Callable<IArrayBuilder> arrayBuilderFactory = ArrayListBuilder::new;
     public static final Callable<IObjectBuilder> objectBuilderFactory = HashMapBuilder::new;
     public static boolean isPretty = false;
+    public static int prettyIndent = 2;
 }

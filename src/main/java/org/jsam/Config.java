@@ -10,7 +10,8 @@ public record Config(int readBufSize,
                      Charset writerCharset,
                      Callable<IArrayBuilder> arrayBuilderFactory,
                      Callable<IObjectBuilder> objectBuilderFactory,
-                     boolean isPretty
+                     boolean isPretty,
+                     int prettyIndent
 ) {
 
     @SuppressWarnings("unused")
@@ -31,6 +32,7 @@ public record Config(int readBufSize,
         private Callable<IArrayBuilder> arrayBuilderFactory = Const.arrayBuilderFactory;
         private Callable<IObjectBuilder> objectBuilderFactory = Const.objectBuilderFactory;
         private boolean isPretty = Const.isPretty;
+        private int prettyIndent = Const.prettyIndent;
 
         @SuppressWarnings("unused")
         public Builder readBufSize(final int readBufSize) {
@@ -81,6 +83,12 @@ public record Config(int readBufSize,
         }
 
         @SuppressWarnings("unused")
+        public Builder prettyIndent(final int prettyIndent) {
+            this.prettyIndent = prettyIndent;
+            return this;
+        }
+
+        @SuppressWarnings("unused")
         public Config build() {
             return new Config(
                     readBufSize,
@@ -90,7 +98,8 @@ public record Config(int readBufSize,
                     writerCharset,
                     arrayBuilderFactory,
                     objectBuilderFactory,
-                    isPretty
+                    isPretty,
+                    prettyIndent
             );
         }
     }

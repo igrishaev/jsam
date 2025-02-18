@@ -13,12 +13,13 @@ public class JsonWriter implements AutoCloseable {
     private final IFn fnProtocol;
     private final Config config;
     private int level = 0;
-    private final int step = 2;
+    private final int step;
 
     private JsonWriter(final Writer writer, final IFn fnProtocol, final Config config) {
         this.writer = writer;
         this.fnProtocol = fnProtocol;
         this.config = config;
+        this.step = config.prettyIndent();
     }
 
     @SuppressWarnings("unused")
@@ -108,15 +109,16 @@ public class JsonWriter implements AutoCloseable {
             printIndent();
         }
         writer.write('}');
-        if (isPretty) {
-            printBr();
-        }
     }
 
     @SuppressWarnings("unused")
     public void writeArray(final Iterable<?> iterable) throws IOException {
-        final boolean isPretty = config.isPretty();
         final Iterator<?> iter = iterable.iterator();
+        if (!iter.hasNext()) {
+            writer.write("[]");
+            return;
+        }
+        final boolean isPretty = config.isPretty();
         writer.write("[");
         if (isPretty) {
             level++;
@@ -139,9 +141,6 @@ public class JsonWriter implements AutoCloseable {
             printIndent();
         }
         writer.write(']');
-        if (isPretty) {
-            printBr();
-        }
     }
 
     @SuppressWarnings("unused")

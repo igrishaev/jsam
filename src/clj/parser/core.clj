@@ -82,8 +82,8 @@
 (def CFG
   (-> (Config/builder)
       (.isPretty true)
-      (.build)
-      ))
+      (.prettyIndent 4)
+      (.build)))
 
 (defn write-to-string [value]
   (with-open [out (new StringWriter)
