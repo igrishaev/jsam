@@ -29,12 +29,12 @@
                   temp-buf-size
                   parser-charset
                   writer-charset
+                  ;; TODO: supplier?
                   array-builder-factory
                   object-builder-factory
                   pretty?
                   pretty-indent]}
-          opt
-          ]
+          opt]
 
       (cond-> (Config/builder)
 
@@ -47,26 +47,26 @@
         temp-buf-size
         (.tempBufSize temp-buf-size)
 
-        ;; parser-charset
-        ;; writer-charset
-        ;; array-builder-factory
-        ;; object-builder-factory
-        ;; pretty?
-        ;; pretty-indent
+        parser-charset
+        (.parserCharset parser-charset)
 
-        ;; parserCharset
-        ;; writerCharset
-        ;; arrayBuilderFactory
-        ;; objectBuilderFactory
-        ;; isPretty
-        ;; prettyIndent
+        writer-charset
+        (.writerCharset writer-charset)
+
+        array-builder-factory
+        (.arrayBuilderFactory array-builder-factory)
+
+        object-builder-factory
+        (.objectBuilderFactory object-builder-factory)
+
+        (some? pretty?)
+        (.isPretty pretty?)
+
+        pretty-indent
+        (.prettyIndent pretty-indent)
 
         :finally
-        (.build))
-
-      ))
-
-  )
+        (.build)))))
 
 
 ;;
@@ -106,9 +106,58 @@
 ;; Writer
 ;;
 
-
 (defprotocol IJSON
   (-encode [this writer]))
+
+
+(defn write
+  "
+  Write data into a destination that can be a file path, a file,
+  an output stream, a writer, etc. The data is arbitrary Clojure
+  or Java value. Accepts an optional map of preferences.
+  "
+  ([dest data]
+   (write dest data nil))
+
+  ([dest data opt]
+   (with-open [out (io/writer dest)
+               jwr (JsonWriter/create out -encode (->config opt))]
+     (.write jwr data))))
+
+
+(defn write-string
+  "
+  Like `write` but the output is a `StringWriter` which gets
+  turned into a string afterwards.
+  "
+  (^String [data]
+   (write-string data nil))
+
+  (^String [data opt]
+   (with-open [out (new StringWriter)
+               jwr (JsonWriter/create out -encode (->config opt))]
+     (.write jwr data)
+     (.toString out))))
+
+
+;;
+;; Writer extensions
+;;
+
+
+(defmacro extend-as-string [Type]
+  (let [writer (with-meta (gensym "writer") {:tag `JsonWriter})]
+    `(extend-protocol IJSON
+       ~Type
+       (-encode [this# ~writer]
+         (.writeString ~writer (str this#))))))
+
+
+(extend-as-string Pattern)
+(extend-as-string UUID)
+(extend-as-string Temporal)
+(extend-as-string Date)
+(extend-as-string Symbol)
 
 
 (extend-protocol IJSON
@@ -117,29 +166,14 @@
   (-encode [this ^JsonWriter writer]
     (.writeNull writer nil))
 
+  ;; TODO: better exception
   Object
   (-encode [this ^JsonWriter writer]
     (throw (ex-info "cannot json-encode" {:this this})))
 
-  Pattern
-  (-encode [this ^JsonWriter writer]
-    (.writeString writer (str this)))
-
   String
   (-encode [this ^JsonWriter writer]
     (.writeString writer this))
-
-  UUID
-  (-encode [this ^JsonWriter writer]
-    (.writeString writer (str this)))
-
-  Temporal
-  (-encode [this ^JsonWriter writer]
-    (.writeString writer (str this)))
-
-  Date
-  (-encode [this ^JsonWriter writer]
-    (.writeString writer (str this)))
 
   Boolean
   (-encode [this ^JsonWriter writer]
@@ -159,53 +193,7 @@
 
   Keyword
   (-encode [this ^JsonWriter writer]
-    (.writeString writer (-> this str (subs 1))))
-
-  Symbol
-  (-encode [this ^JsonWriter writer]
-    (.writeString writer (str this)))
-
-
-
-  )
-
-
-(defn write-to []
-  )
-
-(def CFG
-  (-> (Config/builder)
-      (.isPretty true)
-      (.prettyIndent 4)
-      (.build)))
-
-(defn write-to-string [value]
-  (with-open [out (new StringWriter)
-              jwr (JsonWriter/create out -encode CFG)]
-    (.write jwr value)
-    (.toString out)))
-
-
-
-
-
-
-#_
-(defn parse [src]
-  (with-open [in (-> src io/reader)]
-    (-> (new Parser in)
-        (.parse))))
-
-(defn parse2 [^String content]
-  (-> content
-      (JsonParser/fromString)
-      (.parse)))
-
-(defn parse3 [^java.io.File file]
-  (-> file
-      (JsonParser/fromFile)
-      (.parse)))
-
+    (.writeString writer (-> this str (subs 1)))))
 
 
 (comment
