@@ -1,4 +1,5 @@
-(ns parser.core
+(ns jsam.core
+  (:refer-clojure :exclude [read read-string])
   (:import
    [org.jsam JsonParser JsonWriter Config]
    [java.io StringWriter]
@@ -11,6 +12,99 @@
    [clojure.data.json :as data.json]
    [jsonista.core :as json]
    [clojure.java.io :as io]))
+
+(set! *warn-on-reflection* true)
+
+;;
+;; Config
+;;
+
+
+(defn ->config ^Config [opt]
+  (if (empty? opt)
+    Config/DEFAULTS
+
+    (let [{:keys [read-buf-size
+                  temp-buf-scale-factor
+                  temp-buf-size
+                  parser-charset
+                  writer-charset
+                  array-builder-factory
+                  object-builder-factory
+                  pretty?
+                  pretty-indent]}
+          opt
+          ]
+
+      (cond-> (Config/builder)
+
+        read-buf-size
+        (.readBufSize read-buf-size)
+
+        temp-buf-scale-factor
+        (.tempBufScaleFactor temp-buf-scale-factor)
+
+        temp-buf-size
+        (.tempBufSize temp-buf-size)
+
+        ;; parser-charset
+        ;; writer-charset
+        ;; array-builder-factory
+        ;; object-builder-factory
+        ;; pretty?
+        ;; pretty-indent
+
+        ;; parserCharset
+        ;; writerCharset
+        ;; arrayBuilderFactory
+        ;; objectBuilderFactory
+        ;; isPretty
+        ;; prettyIndent
+
+        :finally
+        (.build))
+
+      ))
+
+  )
+
+
+;;
+;; Reader
+;;
+
+(defn read
+  "
+  Read data from a source that can be a file, a file path,
+  an input stream, a writer, etc. The source gets transformed
+  to the `Reader` instance. The reader gets closed afterwards.
+  Accepts an optional map of settings.
+  "
+  ([src]
+   (read src nil))
+
+  ([src opt]
+   (with-open [r (io/reader src)
+               p (JsonParser/fromReader r (->config opt))]
+     (.parse p))))
+
+
+(defn read-string
+  "
+  Read data from a string. Works a bit faster than `read` as
+  the entire data sits in memory and no IO is performed.
+  "
+  ([^String string]
+   (read-string string nil))
+
+  ([^String string opt]
+   (with-open [p (JsonParser/fromString string (->config opt))]
+     (.read p))))
+
+
+;;
+;; Writer
+;;
 
 
 (defprotocol IJSON
@@ -93,7 +187,7 @@
 
 
 
-(set! *warn-on-reflection* true)
+
 
 
 #_
@@ -111,6 +205,8 @@
   (-> file
       (JsonParser/fromFile)
       (.parse)))
+
+
 
 (comment
 

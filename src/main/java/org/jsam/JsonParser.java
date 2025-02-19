@@ -10,7 +10,7 @@ import java.util.concurrent.Callable;
 
 import static org.jsam.Error.error;
 
-public class JsonParser {
+public class JsonParser implements AutoCloseable {
 
     private int numIntSize = 0;
     private boolean numHasFrac = false;
@@ -468,6 +468,11 @@ public class JsonParser {
         return '1' <= c && c <= '9';
     }
 
+    @Override
+    public void close() throws Exception {
+        reader.close();
+    }
+
     public static void main(String[] args) throws IOException {
 //        final Parser p = new Parser(new StringReader("[ \"abc\" , \"xyz\" , [\"ccc\" , \"aaa\" ] ]"));
 //        final Parser p = new Parser(new StringReader("  \"abc\u015Cde\"  "));
@@ -492,6 +497,5 @@ public class JsonParser {
 
 //        System.out.println();
     }
-
 
 }
