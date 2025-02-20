@@ -1,15 +1,15 @@
 package org.jsam;
 
 import java.nio.charset.Charset;
-import java.util.concurrent.Callable;
+import java.util.function.Supplier;
 
 public record Config(int readBufSize,
                      int tempBufScaleFactor,
                      int tempBufSize,
                      Charset parserCharset,
                      Charset writerCharset,
-                     Callable<IArrayBuilder> arrayBuilderFactory,
-                     Callable<IObjectBuilder> objectBuilderFactory,
+                     Supplier<IArrayBuilder> arrayBuilderSupplier,
+                     Supplier<IObjectBuilder> objectBuilderSupplier,
                      boolean isPretty,
                      int prettyIndent
 ) {
@@ -29,8 +29,8 @@ public record Config(int readBufSize,
         private int tempBufSize = Const.tempBufSize;
         private Charset parserCharset = Const.parserCharset;
         private Charset writerCharset = Const.parserCharset;
-        private Callable<IArrayBuilder> arrayBuilderFactory = Const.arrayBuilderFactory;
-        private Callable<IObjectBuilder> objectBuilderFactory = Const.objectBuilderFactory;
+        private Supplier<IArrayBuilder> arrayBuilderSupplier = Const.arrayBuilderSupplier;
+        private Supplier<IObjectBuilder> objectBuilderSupplier = Const.objectBuilderSupplier;
         private boolean isPretty = Const.isPretty;
         private int prettyIndent = Const.prettyIndent;
 
@@ -65,14 +65,14 @@ public record Config(int readBufSize,
         }
 
         @SuppressWarnings("unused")
-        public Builder arrayBuilderFactory(final Callable<IArrayBuilder> arrayBuilderFactory) {
-            this.arrayBuilderFactory = arrayBuilderFactory;
+        public Builder arrayBuilderSupplier(final Supplier<IArrayBuilder> arrayBuilderSupplier) {
+            this.arrayBuilderSupplier = arrayBuilderSupplier;
             return this;
         }
 
         @SuppressWarnings("unused")
-        public Builder objectBuilderFactory(final Callable<IObjectBuilder> objectBuilderFactory) {
-            this.objectBuilderFactory = objectBuilderFactory;
+        public Builder objectBuilderSupplier(final Supplier<IObjectBuilder> objectBuilderSupplier) {
+            this.objectBuilderSupplier = objectBuilderSupplier;
             return this;
         }
 
@@ -96,8 +96,8 @@ public record Config(int readBufSize,
                     tempBufSize,
                     parserCharset,
                     writerCharset,
-                    arrayBuilderFactory,
-                    objectBuilderFactory,
+                    arrayBuilderSupplier,
+                    objectBuilderSupplier,
                     isPretty,
                     prettyIndent
             );

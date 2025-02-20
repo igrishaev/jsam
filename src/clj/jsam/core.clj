@@ -1,6 +1,7 @@
 (ns jsam.core
   (:refer-clojure :exclude [read read-string])
   (:import
+   [java.util.function Supplier]
    [org.jsam JsonParser JsonWriter Config]
    [java.io StringWriter]
    [java.util List Map UUID Date]
@@ -24,6 +25,12 @@
    `(throw (org.jsam.Error/error (format ~template ~@args)))))
 
 
+(defmacro supplier [& body]
+  `(reify Supplier
+     (get [this]
+       ~@body)))
+
+
 ;;
 ;; Config
 ;;
@@ -37,9 +44,8 @@
                   temp-buf-size
                   parser-charset
                   writer-charset
-                  ;; TODO: supplier?
-                  array-builder-factory
-                  object-builder-factory
+                  array-builder-supplier
+                  object-builder-supplier
                   pretty?
                   pretty-indent]}
           opt]
@@ -61,11 +67,11 @@
         writer-charset
         (.writerCharset writer-charset)
 
-        array-builder-factory
-        (.arrayBuilderFactory array-builder-factory)
+        array-builder-supplier
+        (.arrayBuilderSupplier array-builder-supplier)
 
-        object-builder-factory
-        (.objectBuilderFactory object-builder-factory)
+        object-builder-supplier
+        (.objectBuilderSupplier object-builder-supplier)
 
         (some? pretty?)
         (.isPretty pretty?)

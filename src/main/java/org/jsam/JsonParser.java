@@ -6,7 +6,7 @@ import java.math.BigInteger;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.util.*;
-import java.util.concurrent.Callable;
+import java.util.function.Supplier;
 
 import static org.jsam.Error.error;
 
@@ -29,8 +29,8 @@ public class JsonParser implements AutoCloseable {
     private int tempLen;
     private int tempPos = 0;
 
-    private final Callable<IArrayBuilder> arrayBuilderFactory;
-    private final Callable<IObjectBuilder> objectBuilderFactory;
+    private final Supplier<IArrayBuilder> arrayBuilderSupplier;
+    private final Supplier<IObjectBuilder> objectBuilderSupplier;
 
     private final Config config;
 
@@ -46,8 +46,8 @@ public class JsonParser implements AutoCloseable {
         this.tempBufScaleFactor = config.tempBufScaleFactor();
         this.tempLen = config.tempBufSize();
         this.tempBuf = new char[tempLen];
-        this.arrayBuilderFactory = config().arrayBuilderFactory();
-        this.objectBuilderFactory = config().objectBuilderFactory();
+        this.arrayBuilderSupplier = config().arrayBuilderSupplier();
+        this.objectBuilderSupplier = config().objectBuilderSupplier();
     }
 
     @SuppressWarnings("unused")
@@ -177,12 +177,7 @@ public class JsonParser implements AutoCloseable {
         if (c != '{') {
             throw error("reading object: expected '{' but got '%s'", c);
         }
-        final IObjectBuilder builder;
-        try {
-            builder = objectBuilderFactory.call();
-        } catch (Exception e) {
-            throw error(e, "failed to get an object builder");
-        }
+        final IObjectBuilder builder = objectBuilderSupplier.get();
         boolean repeat = true;
         ws();
         c = read();
@@ -224,12 +219,7 @@ public class JsonParser implements AutoCloseable {
         if (c != '[') {
             throw error("reading array: expected '[' but got '%s'", c);
         }
-        final IArrayBuilder builder;
-        try {
-            builder = arrayBuilderFactory.call();
-        } catch (Exception e) {
-            throw error(e, "failed to get an array builder");
-        }
+        final IArrayBuilder builder = arrayBuilderSupplier.get();
         ws();
         c = read();
         if (c == ']') {
