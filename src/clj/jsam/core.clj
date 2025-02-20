@@ -1,17 +1,15 @@
 (ns jsam.core
   (:refer-clojure :exclude [read read-string])
   (:import
-   [java.util.function Supplier]
-   [org.jsam JsonParser JsonWriter Config]
+   [clojure.lang Keyword Symbol]
    [java.io StringWriter]
-   [java.util List Map UUID Date]
-   [java.util.regex Pattern]
    [java.time.temporal Temporal]
-   [clojure.lang Keyword Symbol])
+   [java.util List Map UUID Date]
+   [java.util.function Supplier]
+   [java.util.regex Pattern]
+   [org.jsam JsonParser JsonWriter Config])
   (:use criterium.core)
   (:require
-   [clojure.data.json :as data.json]
-   [jsonista.core :as json]
    [clojure.java.io :as io]))
 
 (set! *warn-on-reflection* true)
@@ -158,13 +156,19 @@
 ;; Writer extensions
 ;;
 
-
 (defmacro extend-as-string [Type]
   (let [writer (with-meta (gensym "writer") {:tag `JsonWriter})]
     `(extend-protocol IJSON
        ~Type
        (-encode [this# ~writer]
          (.writeString ~writer (str this#))))))
+
+
+(defmacro extend-custom [[Type value ^JsonWriter writer] & body]
+  `(extend-protocol IJSON
+     ~Type
+     (-encode [~value ~writer]
+       ~@body)))
 
 
 (extend-as-string Pattern)
@@ -211,6 +215,9 @@
 
 
 (comment
+
+  (require '[clojure.data.json :as data.json])
+  (require '[jsonista.core :as json])
 
   ;; file
   (quick-bench

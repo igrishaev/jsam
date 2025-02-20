@@ -344,33 +344,38 @@ public class JsonParser implements AutoCloseable {
         }
     }
 
+    private static Number parseNumber(final String string,
+                                      final int intFigures,
+                                      final boolean hasFrac,
+                                      final boolean hasExp) {
+        if (!hasFrac && !hasExp) {
+            if (intFigures < 5) {
+                return Short.parseShort(string);
+            } else if (intFigures < 9) {
+                return Integer.parseInt(string);
+            } else if (intFigures < 18) {
+                return Long.parseLong(string);
+            } else {
+                return new BigInteger(string);
+            }
+        } else {
+            if (intFigures < 38) {
+                return Float.parseFloat(string);
+            } else if (intFigures < 307) {
+                return Double.parseDouble(string);
+            } else {
+                return new BigDecimal(string);
+            }
+        }
+    }
+
     private Number readNumber() {
         resetTempBuf();
         readInteger();
         readFraction();
         readExponent();
         final String string = getCollectedString();
-        Number n;
-        if (!numHasFrac && !numHasExp) {
-            if (numIntSize < 5) {
-                n = Short.parseShort(string);
-            } else if (numIntSize < 9) {
-                n = Integer.parseInt(string);
-            } else if (numIntSize < 18) {
-                n = Long.parseLong(string);
-            } else {
-                n = new BigInteger(string);
-            }
-        } else {
-            if (numIntSize < 38) {
-                n = Float.parseFloat(string);
-            } else if (numIntSize < 307) {
-                n = Double.parseDouble(string);
-            } else {
-                n = new BigDecimal(string);
-            }
-        }
-        return n;
+        return parseNumber(string, numIntSize, numHasFrac, numHasExp);
     }
 
     private boolean readTrue() {

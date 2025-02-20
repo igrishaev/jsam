@@ -64,12 +64,17 @@ public class JsonWriter implements AutoCloseable {
         writer.write(value.toString());
     }
 
-    private void printBr() throws IOException {
+    private void writeBr() throws IOException {
         writer.write("\r\n");
     }
 
-    private void printIndent() throws IOException {
+    private void writeIndent() throws IOException {
         writer.write(" ".repeat(step * level));
+    }
+
+    @SuppressWarnings("unused")
+    public void writeRaw(final String string) throws IOException {
+        writer.write(string);
     }
 
     @SuppressWarnings("unused")
@@ -84,11 +89,11 @@ public class JsonWriter implements AutoCloseable {
         writer.write('{');
         if (isPretty) {
             level++;
-            printBr();
+            writeBr();
         }
         for (Map.Entry<?, ?> kv: map.entrySet()) {
             if (isPretty) {
-                printIndent();
+                writeIndent();
             }
             write(kv.getKey());
             writer.write(':');
@@ -101,12 +106,12 @@ public class JsonWriter implements AutoCloseable {
                 writer.write(',');
             }
             if (isPretty) {
-                printBr();
+                writeBr();
             }
         }
         if (isPretty) {
             level--;
-            printIndent();
+            writeIndent();
         }
         writer.write('}');
     }
@@ -122,23 +127,23 @@ public class JsonWriter implements AutoCloseable {
         writer.write("[");
         if (isPretty) {
             level++;
-            printBr();
+            writeBr();
         }
         while (iter.hasNext()) {
             if (isPretty) {
-                printIndent();
+                writeIndent();
             }
             write(iter.next());
             if (iter.hasNext()) {
                 writer.write(',');
             }
             if (isPretty) {
-                printBr();
+                writeBr();
             }
         }
         if (isPretty) {
             level--;
-            printIndent();
+            writeIndent();
         }
         writer.write(']');
     }
