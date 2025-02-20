@@ -15,10 +15,18 @@
 
 (set! *warn-on-reflection* true)
 
+
+(defmacro error!
+  ([message]
+   `(throw (org.jsam.Error/error ~message)))
+
+  ([template & args]
+   `(throw (org.jsam.Error/error (format ~template ~@args)))))
+
+
 ;;
 ;; Config
 ;;
-
 
 (defn ->config ^Config [opt]
   (if (empty? opt)
@@ -99,7 +107,7 @@
 
   ([^String string opt]
    (with-open [p (JsonParser/fromString string (->config opt))]
-     (.read p))))
+     (.parse p))))
 
 
 ;;
@@ -166,10 +174,10 @@
   (-encode [this ^JsonWriter writer]
     (.writeNull writer nil))
 
-  ;; TODO: better exception
   Object
   (-encode [this ^JsonWriter writer]
-    (throw (ex-info "cannot json-encode" {:this this})))
+    (error! "don't know how to JSON-encode an object, type: %s, value: %s"
+            (type this) this))
 
   String
   (-encode [this ^JsonWriter writer]
