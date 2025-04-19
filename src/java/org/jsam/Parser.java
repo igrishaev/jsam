@@ -1,11 +1,11 @@
-package me.ivan;
+package org.jsam;
 
 import java.io.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.CharBuffer;
 import java.util.*;
-import static me.ivan.ParseError.error;
+import static org.jsam.ParseError.error;
 
 public class Parser {
 

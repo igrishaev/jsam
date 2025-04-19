@@ -1,4 +1,4 @@
-package me.ivan;
+package org.jsam;
 
 public class ParseError extends RuntimeException {
     private ParseError (final String message) {
