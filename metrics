@@ -38,3 +38,40 @@ Execution time mean : 90.646492 µs
 
 100mb
              Execution time mean : 862.119425 ms read try catch
+
+
+
+parser.core
+> (quick-bench
+      (parse3 (io/file "100mb.json")))
+Evaluation count : 6 in 6 samples of 1 calls.
+             Execution time mean : 1.096171 sec
+    Execution time std-deviation : 30.846958 ms
+   Execution time lower quantile : 1.068108 sec ( 2.5%)
+   Execution time upper quantile : 1.138155 sec (97.5%)
+                   Overhead used : 5.296136 ns
+nil
+parser.core
+> (quick-bench
+      (json/read-value (io/file "100mb.json")))Evaluation count : 6 in 6 samples of 1 calls.
+             Execution time mean : 586.690911 ms
+    Execution time std-deviation : 46.632682 ms
+   Execution time lower quantile : 544.528995 ms ( 2.5%)
+   Execution time upper quantile : 656.724781 ms (97.5%)
+                   Overhead used : 5.296136 ns
+nil
+parser.core
+>
+parser.core
+> (quick-bench
+      (with-open [r (io/reader (io/file "100mb.json"))]
+        (data.json/read r)))
+Evaluation count : 6 in 6 samples of 1 calls.
+             Execution time mean : 2.805722 sec
+    Execution time std-deviation : 43.655039 ms
+   Execution time lower quantile : 2.762854 sec ( 2.5%)
+   Execution time upper quantile : 2.853604 sec (97.5%)
+                   Overhead used : 5.296136 ns
+nil
+parser.core
+>
