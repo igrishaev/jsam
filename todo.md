@@ -9,11 +9,24 @@ config
 - arr supplier
 
 java parser
-key function
+
+?
+fn-obj-key
+fn-obj-val
+fn-arr-val
+fn-arr
+fn-string
+fn-num
+fn-bool
 
 tests
 - charred
 - clojure.data.json
 - jsonista
+- chesire
+
+bench
+- vs jsonista
+- vs chesire
 
 implement writer
