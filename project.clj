@@ -1,6 +1,6 @@
 (def MIN_JAVA_VERSION "17")
 
-(defproject parser-test "0.1.2"
+(defproject com.github.igrishaev/jsam "0.1.0-SNAPSHOT"
 
   :managed-dependencies
   [[org.clojure/clojure "1.11.1"]
@@ -28,12 +28,7 @@
    ["maven.compiler.target" ~MIN_JAVA_VERSION]]
 
   :source-paths ["src/clj"]
-  :java-source-paths ["src/main/java"]
+  :java-source-paths ["src/java"]
   :javac-options ["-Xlint:unchecked"
                   "-Xlint:preview"
-                  "--release" ~MIN_JAVA_VERSION]
-
-
-
-
-  )
+                  "--release" ~MIN_JAVA_VERSION])

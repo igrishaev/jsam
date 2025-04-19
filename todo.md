@@ -1,6 +1,33 @@
 
 keep java reader?
 rollback writeArray(List)?
+parser config
+reader parser
+
+config
+- obj supplier
+- arr supplier
+
+java parser
+
+?
+fn-obj-key
+fn-obj-val
+fn-arr-val
+fn-arr
+fn-string
+fn-num
+fn-bool
+
+tests
+- charred
+- clojure.data.json
+- jsonista
+- chesire
+
+bench
+- vs jsonista
+- vs chesire
 
 move number decoding into a separate method
 

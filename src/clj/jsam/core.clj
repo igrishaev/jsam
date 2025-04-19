@@ -259,7 +259,6 @@
   (quick-bench
       (data.json/read-str content))
 
-
   (json/write-value (io/file "data2.json")
                     (vec
                      (for [x (range 1000)]
