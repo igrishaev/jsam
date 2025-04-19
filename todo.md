@@ -1,8 +1,6 @@
 
 parser config
-char[] parser
 reader parser
-File, InputStream, Socket, URL
 
 config
 - obj supplier

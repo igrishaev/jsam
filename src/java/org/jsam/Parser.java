@@ -3,50 +3,86 @@ package org.jsam;
 import java.io.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.net.Socket;
+import java.net.URL;
 import java.nio.CharBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import static org.jsam.ParseError.error;
 
-public class Parser {
+public class Parser implements AutoCloseable {
+
+    private final ParserConfig config;
+    private final Reader reader;
+    private final char[] readBuf;
+    private final CharBuffer uXXXX = CharBuffer.allocate(4);
 
     private int numIntSize = 0;
     private boolean numHasFrac = false;
     private boolean numHasExp = false;
-
-    private final Reader reader;
-
-    private final char[] readBuf;
-    private int readLen = 8192;
     private int readOff = 0;
     private int readPos = 0;
-
-    private static final int scaleFactor = 2;
-
-    private final CharBuffer uXXXX = CharBuffer.allocate(4);
-
     private char[] tempBuf;
-    private int tempLen = 255;
+    private int tempLen;
     private int tempPos = 0;
 
     private void scaleBuffer() {
-        tempLen = tempLen * scaleFactor;
+        tempLen = tempLen * config.scaleFactor();
         char[] newBuf = new char[tempLen];
         System.arraycopy(tempBuf, 0, newBuf, 0, tempBuf.length);
         this.tempBuf = newBuf;
     }
 
-    public Parser(final String content) {
+    @SuppressWarnings("unused")
+    public static Parser fromFile(final File file, final ParserConfig config) throws FileNotFoundException {
+        return new Parser(new FileReader(file), config);
+    }
+
+    @SuppressWarnings("unused")
+    public static Parser fromFile(final File file) throws FileNotFoundException {
+        return fromFile(file, ParserConfig.DEFAULT);
+    }
+
+    @SuppressWarnings("unused")
+    public static Parser fromInputStream(final InputStream inputStream, final ParserConfig config) {
+        return new Parser(new InputStreamReader(inputStream), config);
+    }
+
+    @SuppressWarnings("unused")
+    public static Parser fromURL(final URL url, final ParserConfig config) throws IOException {
+        return new Parser(new InputStreamReader(url.openStream()), config);
+    }
+
+    @SuppressWarnings("unused")
+    public static Parser fromSocket(final Socket socket, final ParserConfig config) throws IOException {
+        return new Parser(new InputStreamReader(socket.getInputStream()), config);
+    }
+
+    @SuppressWarnings("unused")
+    public static Parser fromString(final String string, final ParserConfig config) {
+        return new Parser(string, config);
+    }
+
+    @SuppressWarnings("unused")
+    public static Parser fromByteArray(final byte[] buf, final ParserConfig config) {
+        return fromString(new String(buf, StandardCharsets.UTF_8), config);
+    }
+
+    private Parser(final Reader reader, final ParserConfig config) {
+        this.config = config;
+        this.tempLen = config.tempLen();
+        this.readBuf = new char[config.readLen()];
+        this.tempBuf = new char[tempLen];
+        this.reader = reader;
+    }
+
+    private Parser(final String content, final ParserConfig config) {
+        this.config = config;
         this.readBuf = content.toCharArray();
-        this.readLen = readBuf.length;
+        this.tempLen = config.tempLen();
         this.readOff = readBuf.length;
         this.reader = Reader.nullReader();
         this.tempBuf = new char[tempLen];
-    }
-
-    public Parser(final File file) throws IOException {
-        this.readBuf = new char[readLen];
-        this.tempBuf = new char[tempLen];
-        this.reader = new FileReader(file);
     }
 
     private void resetTempBuf() {
@@ -388,30 +424,18 @@ public class Parser {
         return '1' <= c && c <= '9';
     }
 
-    public static void main(String[] args) throws IOException {
-//        final Parser p = new Parser(new StringReader("[ \"abc\" , \"xyz\" , [\"ccc\" , \"aaa\" ] ]"));
-//        final Parser p = new Parser(new StringReader("  \"abc\u015Cde\"  "));
-//        final Parser p = new Parser(new StringReader("[ 1, 2, 3, 3, 4, 1.3, {\"foo\" : 100} , 2 ] "));
-//        final Parser p = new Parser(new StringReader(" [null,1,null,-2.33333,{\"aa\":null, \"bb\":[1,null,2]}]"));
-//        final Parser p = new Parser(new StringReader(" [ 1, true, 2 , false, null, 3] "));
-//        final Parser p = new Parser(new StringReader("[ \"abc\" , \"xyz\", [ \"a\",  [ \"a\", \"a\", \"a\"  ], \"a\", \"a\"  ], \"1\" , \"2\", \"3\" ]"));
-
-
-//        final Parser p = new Parser(new StringReader("  [ true , false, [ true, false ], \"abc\" ] "));
-//        final Parser p = new Parser("  [ true , false, [ true, false ], \"abc\" ] ");
-        final Parser p = new Parser(new File("100mb.json"));
+    public static void main(final String... args) throws IOException {
+        final Parser p = Parser.fromFile(new File("100mb.json"));
         final long t1 = System.currentTimeMillis();
         p.parse();
         final long t2 = System.currentTimeMillis();
         System.out.println(t2 - t1);
-//        final StringBuilder sb = new StringBuilder(4);
-//        System.out.println(sb.hashCode());
-
-
-
-
-//        System.out.println();
     }
 
-
+    @Override
+    public void close() throws Exception {
+        if (reader != null) {
+            reader.close();
+        }
+    }
 }
