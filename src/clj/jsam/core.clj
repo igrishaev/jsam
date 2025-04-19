@@ -1,5 +1,5 @@
-(ns parser.core
-  (:import me.ivan.Parser)
+(ns jsam.core
+  (:import org.jsam.Parser)
   (:use criterium.core)
   (:require
    [jsonista.core :as json]
@@ -41,10 +41,10 @@
 
   ;; string
   (quick-bench
-      (parse2 content))
+      (parse2 content100mb))
 
   (quick-bench
-      (json/read-value content))
+      (json/read-value content100mb))
 
 
   (json/write-value (io/file "data2.json")

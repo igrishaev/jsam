@@ -20,7 +20,7 @@ public class Parser {
     private int readOff = 0;
     private int readPos = 0;
 
-    private final int scaleFactor = 2;
+    private static final int scaleFactor = 2;
 
     private final CharBuffer uXXXX = CharBuffer.allocate(4);
 
