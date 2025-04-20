@@ -3,7 +3,7 @@ package org.jsam;
 import clojure.lang.ITransientCollection;
 import clojure.lang.PersistentVector;
 
-public class PersistentVectorBuilder implements IArrayBuilder {
+public class ClojureVectorBuilder implements IArrayBuilder {
 
     private ITransientCollection vector = PersistentVector.EMPTY.asTransient();
 

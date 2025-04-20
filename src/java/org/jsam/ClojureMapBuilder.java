@@ -2,7 +2,7 @@ package org.jsam;
 
 import clojure.lang.*;
 
-public class PersistentMapBuilder implements IObjectBuilder {
+public class ClojureMapBuilder implements IObjectBuilder {
 
     private ITransientMap map = PersistentArrayMap.EMPTY.asTransient();
 

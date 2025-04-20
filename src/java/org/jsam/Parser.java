@@ -3,16 +3,13 @@ package org.jsam;
 import java.io.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.net.Socket;
-import java.net.URL;
 import java.nio.CharBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import static org.jsam.ParseError.error;
 
 public class Parser implements AutoCloseable {
 
-    private final ParserConfig config;
+    private final Config config;
     private final Reader reader;
     private final char[] readBuf;
     private final CharBuffer uXXXX = CharBuffer.allocate(4);
@@ -27,59 +24,34 @@ public class Parser implements AutoCloseable {
     private int tempPos = 0;
 
     private void scaleBuffer() {
-        tempLen = tempLen * config.scaleFactor();
+        tempLen = tempLen * config.tempBufScaleFactor();
         char[] newBuf = new char[tempLen];
         System.arraycopy(tempBuf, 0, newBuf, 0, tempBuf.length);
         this.tempBuf = newBuf;
     }
 
     @SuppressWarnings("unused")
-    public static Parser fromFile(final File file, final ParserConfig config) throws FileNotFoundException {
-        return new Parser(new FileReader(file), config);
+    public static Parser fromReader(final Reader reader, final Config config) {
+        return new Parser(reader, config);
     }
 
     @SuppressWarnings("unused")
-    public static Parser fromFile(final File file) throws FileNotFoundException {
-        return fromFile(file, ParserConfig.DEFAULT);
-    }
-
-    @SuppressWarnings("unused")
-    public static Parser fromInputStream(final InputStream inputStream, final ParserConfig config) {
-        return new Parser(new InputStreamReader(inputStream), config);
-    }
-
-    @SuppressWarnings("unused")
-    public static Parser fromURL(final URL url, final ParserConfig config) throws IOException {
-        return new Parser(new InputStreamReader(url.openStream()), config);
-    }
-
-    @SuppressWarnings("unused")
-    public static Parser fromSocket(final Socket socket, final ParserConfig config) throws IOException {
-        return new Parser(new InputStreamReader(socket.getInputStream()), config);
-    }
-
-    @SuppressWarnings("unused")
-    public static Parser fromString(final String string, final ParserConfig config) {
+    public static Parser fromString(final String string, final Config config) {
         return new Parser(string, config);
     }
 
-    @SuppressWarnings("unused")
-    public static Parser fromByteArray(final byte[] buf, final ParserConfig config) {
-        return fromString(new String(buf, StandardCharsets.UTF_8), config);
-    }
-
-    private Parser(final Reader reader, final ParserConfig config) {
+    private Parser(final Reader reader, final Config config) {
         this.config = config;
-        this.tempLen = config.tempLen();
-        this.readBuf = new char[config.readLen()];
+        this.tempLen = config.tempBufSize();
+        this.readBuf = new char[config.readBufSize()];
         this.tempBuf = new char[tempLen];
         this.reader = reader;
     }
 
-    private Parser(final String content, final ParserConfig config) {
+    private Parser(final String content, final Config config) {
         this.config = config;
         this.readBuf = content.toCharArray();
-        this.tempLen = config.tempLen();
+        this.tempLen = config.tempBufSize();
         this.readOff = readBuf.length;
         this.reader = Reader.nullReader();
         this.tempBuf = new char[tempLen];
@@ -230,8 +202,7 @@ public class Parser implements AutoCloseable {
     }
 
     private void readOneAndMoreDigits() {
-        char c;
-        c = read();
+        char c = read();
         if (isZeroNine(c)) {
             append(c);
         } else {
@@ -424,18 +395,24 @@ public class Parser implements AutoCloseable {
         return '1' <= c && c <= '9';
     }
 
-    public static void main(final String... args) throws IOException {
-        final Parser p = Parser.fromFile(new File("100mb.json"));
-        final long t1 = System.currentTimeMillis();
-        p.parse();
-        final long t2 = System.currentTimeMillis();
-        System.out.println(t2 - t1);
-    }
-
     @Override
     public void close() throws Exception {
         if (reader != null) {
             reader.close();
         }
     }
+
+    public static void main(final String... args) throws IOException {
+//        final Parser p = Parser.fromReader(
+//                new FileReader("100mb.json"),
+//                Config.DEFAULTS
+//        );
+        final Parser p = Parser.fromString("123", Config.DEFAULTS);
+        final long t1 = System.currentTimeMillis();
+        p.parse();
+        final long t2 = System.currentTimeMillis();
+        System.out.println(t2 - t1);
+    }
+
+
 }

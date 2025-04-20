@@ -3,7 +3,7 @@ package org.jsam;
 import java.util.HashMap;
 import java.util.Map;
 
-public class HashMapBuilder implements IObjectBuilder {
+public class JavaMapBuilder implements IObjectBuilder {
 
     private final Map<String, Object> map = new HashMap<>();
 

@@ -1,14 +1,6 @@
 
 keep java reader?
 rollback writeArray(List)?
-parser config
-reader parser
-
-config
-- obj supplier
-- arr supplier
-
-java parser
 
 ?
 fn-obj-key

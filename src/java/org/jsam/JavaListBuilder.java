@@ -3,7 +3,7 @@ package org.jsam;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ArrayListBuilder implements IArrayBuilder {
+public class JavaListBuilder implements IArrayBuilder {
 
     private final List<Object> list = new ArrayList<>();
 

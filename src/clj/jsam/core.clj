@@ -12,6 +12,7 @@
   (:require
    [clojure.java.io :as io]))
 
+
 (set! *warn-on-reflection* true)
 
 
@@ -25,7 +26,7 @@
 
 (defmacro supplier [& body]
   `(reify Supplier
-     (get [this]
+     (get [this#]
        ~@body)))
 
 
@@ -263,8 +264,5 @@
                     (vec
                      (for [x (range 1000)]
                        [true false "hello"])))
-
-
-
 
   )
