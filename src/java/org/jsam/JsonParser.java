@@ -40,6 +40,7 @@ public class JsonParser implements AutoCloseable {
         } else {
             this.readBuf = readBuf;
             this.readOff = readBuf.length;
+            this.isEnd = readBuf.length == 0;
         }
         this.tempBufScaleFactor = config.tempBufScaleFactor();
         this.tempLen = config.tempBufSize();
@@ -159,9 +160,15 @@ public class JsonParser implements AutoCloseable {
     }
 
     private void ws() {
+        if (isEnd) {
+            return;
+        }
         char c;
         while (true) {
             c = read();
+            if (isEnd) {
+                break;
+            }
             if (!(c == ' ' || c == '\r' || c == '\n' || c == '\t')) {
                 unread();
                 break;
@@ -249,6 +256,9 @@ public class JsonParser implements AutoCloseable {
 
     private Object readAny() {
         ws();
+        if (isEnd) {
+            return null;
+        }
         char c = read();
         unread();
         return switch (c) {
@@ -273,6 +283,9 @@ public class JsonParser implements AutoCloseable {
         }
         while (true) {
             c = read();
+            if (isEnd) {
+                break;
+            }
             if (isZeroNine(c)) {
                 append(c);
             } else {
@@ -317,8 +330,7 @@ public class JsonParser implements AutoCloseable {
 
     private void readFraction() {
         numHasFrac = false;
-        char c;
-        c = read();
+        char c = read();
         if (c == '.') {
             append('.');
             numHasFrac = true;
@@ -335,11 +347,16 @@ public class JsonParser implements AutoCloseable {
             numHasExp = true;
             append(c);
             c = read();
+            // has sign
             if (c == '-' || c == '+') {
                 append(c);
                 readOneAndMoreDigits();
+            } else if (isZeroNine(c)) {
+                // no sign, 0..9
+                unread();
+                readOneAndMoreDigits();
             } else {
-                throw error("reading exponent: expected -/+ but got '%s'", c);
+                throw error("reading exponent: expected -/+ or a 0..9 but got '%s'", c);
             }
         } else {
             unread();
@@ -417,6 +434,10 @@ public class JsonParser implements AutoCloseable {
         }
     }
 
+    private static String dumpBuf(final char[] buf, final int len) {
+        return Arrays.toString(Arrays.copyOf(buf, len));
+    }
+
     private String readString() {
         resetTempBuf();
         char c;
@@ -426,6 +447,9 @@ public class JsonParser implements AutoCloseable {
         }
         while (true) {
             c = read();
+            if (isEnd) {
+                throw error("unexpected end of JSON: %s", dumpBuf(tempBuf, tempPos));
+            }
             if (c == '"') {
                 return getCollectedString();
             } else if (c == '\\') {
@@ -470,7 +494,7 @@ public class JsonParser implements AutoCloseable {
         reader.close();
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
 //        final Parser p = new Parser(new StringReader("[ \"abc\" , \"xyz\" , [\"ccc\" , \"aaa\" ] ]"));
 //        final Parser p = new Parser(new StringReader("  \"abc\u015Cde\"  "));
 //        final Parser p = new Parser(new StringReader("[ 1, 2, 3, 3, 4, 1.3, {\"foo\" : 100} , 2 ] "));
@@ -483,7 +507,8 @@ public class JsonParser implements AutoCloseable {
 //        final Parser p = Parser.fromString("  [ true , false, [ true, false ], \"abc\" ] ");
 //        final JsonParser p = JsonParser.fromFile(new File("100mb.json"));
 
-        final JsonParser p = JsonParser.fromString("42");
+//        final JsonParser p = JsonParser.fromString("   ");
+        final JsonParser p = JsonParser.fromReader(new StringReader("\"missing end quote"));
         final long t1 = System.currentTimeMillis();
         System.out.println(p.parse());
         final long t2 = System.currentTimeMillis();
