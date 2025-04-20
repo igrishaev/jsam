@@ -494,7 +494,7 @@ public class JsonParser implements AutoCloseable {
         reader.close();
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
 //        final Parser p = new Parser(new StringReader("[ \"abc\" , \"xyz\" , [\"ccc\" , \"aaa\" ] ]"));
 //        final Parser p = new Parser(new StringReader("  \"abc\u015Cde\"  "));
 //        final Parser p = new Parser(new StringReader("[ 1, 2, 3, 3, 4, 1.3, {\"foo\" : 100} , 2 ] "));
@@ -505,12 +505,13 @@ public class JsonParser implements AutoCloseable {
 
 //        final Parser p = new Parser(new StringReader("  [ true , false, [ true, false ], \"abc\" ] "));
 //        final Parser p = Parser.fromString("  [ true , false, [ true, false ], \"abc\" ] ");
-//        final JsonParser p = JsonParser.fromFile(new File("100mb.json"));
+        final JsonParser p = JsonParser.fromFile(new File("100mb.json"));
 
 //        final JsonParser p = JsonParser.fromString("   ");
-        final JsonParser p = JsonParser.fromReader(new StringReader("\"missing end quote"));
+//        final JsonParser p = JsonParser.fromReader(new StringReader("\"missing end quote"));
         final long t1 = System.currentTimeMillis();
-        System.out.println(p.parse());
+//        System.out.println(p.parse());
+        p.parse();
         final long t2 = System.currentTimeMillis();
         System.out.println(t2 - t1);
 //        final StringBuilder sb = new StringBuilder(4);

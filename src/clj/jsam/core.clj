@@ -102,6 +102,16 @@
      (.parse p))))
 
 
+;; TODO:
+(defn read-file
+  ([file]
+   (read-file file nil))
+
+  ([file opt]
+   (with-open [p (JsonParser/fromFile file (->config opt))]
+     (.parse p))))
+
+
 (defn read-string
   "
   Read data from a string. Works a bit faster than `read` as
@@ -219,18 +229,25 @@
 
   (require '[clojure.data.json :as data.json])
   (require '[jsonista.core :as json])
+  (require '[cheshire.core :as cheshire])
 
-  ;; file
+  ;; jsam
   (quick-bench
-      (parse3 (io/file "100mb.json")))
+      (read-file (io/file "100mb.json")))
 
-  ;; file
+  ;; jsonista
   (quick-bench
       (json/read-value (io/file "100mb.json")))
 
+  ;; data.json
   (quick-bench
       (with-open [r (io/reader (io/file "100mb.json"))]
         (data.json/read r)))
+
+  ;; cheshire
+  (quick-bench
+      (with-open [r (io/reader (io/file "100mb.json"))]
+        (cheshire/parse-stream r)))
 
   (def content
     (slurp "data.json"))

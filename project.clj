@@ -4,7 +4,8 @@
 
   :managed-dependencies
   [[org.clojure/clojure "1.11.1"]
-   [metosin/jsonista "0.3.8"]
+   ;; [metosin/jsonista "0.3.8"]
+   [cheshire "6.0.0"]
    [org.clojure/data.json "2.5.1"]
    [criterium "0.4.6"]]
 
@@ -14,7 +15,8 @@
   :profiles
   {:dev
    {:dependencies
-    [[metosin/jsonista]
+    [#_[metosin/jsonista]
+     [cheshire]
      [org.clojure/data.json]
      [criterium]]
 
