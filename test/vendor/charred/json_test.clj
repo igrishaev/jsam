@@ -1,4 +1,4 @@
-(ns vedor.charred.json-test
+(ns vendor.charred.json-test
   (:require
    [jsam.core :as jsam]
    [clojure.test :refer :all]
@@ -8,15 +8,18 @@
 (deftest read-from-pushback-reader
   (is (= 42 (jsam/read-string "42"))))
 
-;; (deftest read-from-reader
-;;   (let [s (java.io.StringReader. "42")]
-;;     (is (= 42 (charred/read-json s)))))
+(deftest read-from-reader
+  (let [s (java.io.StringReader. "42")]
+    (is (= 42 (jsam/read s)))))
 
-;; (deftest read-numbers
-;;   (is (= 42 (charred/read-json "42")))
-;;   (is (= -3 (charred/read-json "-3")))
-;;   (is (= 3.14159 (charred/read-json "3.14159")))
-;;   (is (= 6.022e23 (charred/read-json "6.022e23"))))
+(deftest read-numbers
+  (is (= 42 (jsam/read-string "42")))
+  (is (= -3 (jsam/read-string "-3")))
+
+  ;; (is (= 3.14159 (jsam/read-string "3.14159")))
+  ;; (is (= 6.022e23 (jsam/read-string "6.022e23")))
+
+  )
 
 ;; (deftest regression-31
 ;;   ;; [#31] Newlines no longer escaped in 1.035
@@ -29,87 +32,94 @@
 ;;           str/split-lines
 ;;           count))))
 
-;; (deftest read-bigint
-;;   (is (= 123456789012345678901234567890N
-;;          (charred/read-json "123456789012345678901234567890"))))
+(deftest read-bigint
+  (is (= 123456789012345678901234567890N
+         (jsam/read-string "123456789012345678901234567890"))))
 
 
-;; (deftest read-bigdec
-;;   (is (= 3.14159M (charred/read-json "3.14159" :bigdec true))))
+#_
+(deftest read-bigdec
+  (is (= 3.14159M (jsam/read-string "3.14159" ;; :bigdec true
+                                    ))))
 
-;; (deftest read-null
-;;   (is (= nil (charred/read-json "null"))))
+(deftest read-null
+  (is (= nil (jsam/read-string "null"))))
 
-;; (deftest read-strings
-;;   (is (= "Hello, World!" (charred/read-json "\"Hello, World!\""))))
+(deftest read-strings
+  (is (= "Hello, World!" (jsam/read-string "\"Hello, World!\""))))
 
-;; (deftest escaped-slashes-in-strings
-;;   (is (= "/foo/bar" (charred/read-json "\"\\/foo\\/bar\""))))
+(deftest escaped-slashes-in-strings
+  (is (= "/foo/bar" (jsam/read-string "\"\\/foo\\/bar\""))))
 
-;; (deftest unicode-escapes
-;;   (is (= " \u0beb " (charred/read-json "\" \\u0bEb \""))))
+(deftest unicode-escapes
+  (is (= " \u0beb " (jsam/read-string "\" \\u0bEb \""))))
 
-;; (deftest escaped-whitespace
-;;   (is (= "foo\nbar" (charred/read-json "\"foo\\nbar\"")))
-;;   (is (= "foo\rbar" (charred/read-json "\"foo\\rbar\"")))
-;;   (is (= "foo\tbar" (charred/read-json "\"foo\\tbar\""))))
+(deftest escaped-whitespace
+  (is (= "foo\nbar" (jsam/read-string "\"foo\\nbar\"")))
+  (is (= "foo\rbar" (jsam/read-string "\"foo\\rbar\"")))
+  (is (= "foo\tbar" (jsam/read-string "\"foo\\tbar\""))))
 
-;; (deftest read-booleans
-;;   (is (= true (charred/read-json "true")))
-;;   (is (= false (charred/read-json "false"))))
+(deftest read-booleans
+  (is (= true (jsam/read-string "true")))
+  (is (= false (jsam/read-string "false"))))
 
-;; (deftest ignore-whitespace
-;;   (is (= nil (charred/read-json "\r\n   null"))))
+(deftest ignore-whitespace
+  (is (= nil (jsam/read-string "\r\n   null"))))
 
-;; (deftest read-arrays
-;;   (is (= (vec (range 35))
-;;          (charred/read-json "[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34]")))
-;;   (is (= ["Ole" "Lena"] (charred/read-json "[\"Ole\", \r\n \"Lena\"]"))))
+(deftest read-arrays
+  (is (= (vec (range 35))
+         (jsam/read-string "[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34]")))
+  (is (= ["Ole" "Lena"] (jsam/read-string "[\"Ole\", \r\n \"Lena\"]"))))
 
-;; (deftest read-objects
-;;   (is (= {:k1 1, :k2 2, :k3 3, :k4 4, :k5 5, :k6 6, :k7 7, :k8 8
-;;           :k9 9, :k10 10, :k11 11, :k12 12, :k13 13, :k14 14, :k15 15, :k16 16}
-;;          (charred/read-json "{\"k1\": 1, \"k2\": 2, \"k3\": 3, \"k4\": 4,
-;;                           \"k5\": 5, \"k6\": 6, \"k7\": 7, \"k8\": 8,
-;;                           \"k9\": 9, \"k10\": 10, \"k11\": 11, \"k12\": 12,
-;;                           \"k13\": 13, \"k14\": 14, \"k15\": 15, \"k16\": 16}"
-;;                         :key-fn keyword))))
+(deftest read-objects
+  (is (= {:k1 1, :k2 2, :k3 3, :k4 4, :k5 5, :k6 6, :k7 7, :k8 8
+          :k9 9, :k10 10, :k11 11, :k12 12, :k13 13, :k14 14, :k15 15, :k16 16}
+         (jsam/read-string "{\"k1\": 1, \"k2\": 2, \"k3\": 3, \"k4\": 4,
+                          \"k5\": 5, \"k6\": 6, \"k7\": 7, \"k8\": 8,
+                          \"k9\": 9, \"k10\": 10, \"k11\": 11, \"k12\": 12,
+                          \"k13\": 13, \"k14\": 14, \"k15\": 15, \"k16\": 16}"
+                           ;; :key-fn keyword TODO
+                           ))))
 
-;; (deftest read-nested-structures
-;;   (is (= {:a [1 2 {:b [3 "four"]} 5.5]}
-;;          (charred/read-json "{\"a\":[1,2,{\"b\":[3,\"four\"]},5.5]}"
-;;                         :key-fn keyword))))
+(deftest read-nested-structures
+  (is (= {:a [1 2 {:b [3 "four"]} 5.5]}
+         (jsam/read-string "{\"a\":[1,2,{\"b\":[3,\"four\"]},5.5]}"
+                           ;; :key-fn keyword TODO
+                           ))))
 
-;; (deftest read-nested-structures-stream
-;;   (is (= {:a [1 2 {:b [3 "four"]} 5.5]}
-;;          (charred/read-json (java.io.StringReader. "{\"a\":[1,2,{\"b\":[3,\"four\"]},5.5]}")
-;;                     :key-fn keyword))))
+(deftest read-nested-structures-stream
+  (is (= {:a [1 2 {:b [3 "four"]} 5.5]}
+         (jsam/read (java.io.StringReader. "{\"a\":[1,2,{\"b\":[3,\"four\"]},5.5]}")
+                    ;; :key-fn keyword TODO
+                    ))))
 
-;; (deftest reads-long-string-correctly
-;;   (let [long-string (str/join "" (take 100 (cycle "abcde")))]
-;;     (is (= long-string (charred/read-json (str "\"" long-string "\""))))))
+(deftest reads-long-string-correctly
+  (let [long-string (str/join "" (take 100 (cycle "abcde")))]
+    (is (= long-string (jsam/read-string (str "\"" long-string "\""))))))
 
-;; (deftest disallows-non-string-keys
-;;   (is (thrown? Exception (charred/read-json "{26:\"z\""))))
+(deftest disallows-non-string-keys
+  (is (thrown? Exception (jsam/read-string "{26:\"z\""))))
 
-;; (deftest disallows-barewords
-;;   (is (thrown? Exception (charred/read-json "  foo  "))))
+(deftest disallows-barewords
+  (is (thrown? Exception (jsam/read-string "  foo  "))))
 
-;; (deftest disallows-unclosed-arrays
-;;   (is (thrown? Exception (charred/read-json "[1, 2,  "))))
+(deftest disallows-unclosed-arrays
+  (is (thrown? Exception (jsam/read-string "[1, 2,  "))))
 
-;; (deftest disallows-unclosed-objects
-;;   (is (thrown? Exception (charred/read-json "{\"a\":1,  "))))
+(deftest disallows-unclosed-objects
+  (is (thrown? Exception (jsam/read-string "{\"a\":1,  "))))
 
-;; (deftest disallows-empty-entry-in-object
-;;   (is (thrown? Exception (charred/read-json "{\"a\":1,}")))
-;;   (is (thrown? Exception (charred/read-json "{\"a\":1, }")))
-;;   (is (thrown? Exception (charred/read-json "{\"a\":1,,,,}")))
-;;   (is (thrown? Exception (charred/read-json "{\"a\":1,,\"b\":2}"))))
+(deftest disallows-empty-entry-in-object
+  (is (thrown? Exception (jsam/read-string "{\"a\":1,}")))
+  (is (thrown? Exception (jsam/read-string "{\"a\":1, }")))
+  (is (thrown? Exception (jsam/read-string "{\"a\":1,,,,}")))
+  (is (thrown? Exception (jsam/read-string "{\"a\":1,,\"b\":2}"))))
 
-;; (deftest get-string-keys
-;;   (is (= {"a" [1 2 {"b" [3 "four"]} 5.5]}
-;;          (charred/read-json "{\"a\":[1,2,{\"b\":[3,\"four\"]},5.5]}"))))
+#_
+;; TODO
+(deftest get-string-keys
+  (is (= {"a" [1 2 {"b" [3 "four"]} 5.5]}
+         (jsam/read-string "{\"a\":[1,2,{\"b\":[3,\"four\"]},5.5]}"))))
 
 ;; (deftest keywordize-keys
 ;;   (is (= {:a [1 2 {:b [3 "four"]} 5.5]}

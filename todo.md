@@ -2,6 +2,12 @@
 keep java reader?
 rollback writeArray(List)?
 
+- fromStream
+- fromURL
+- fromFile
+...
+own buffer
+
 ?
 fn-obj-key
 fn-obj-val

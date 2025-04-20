@@ -12,20 +12,18 @@ import static org.jsam.Error.error;
 
 public class JsonParser implements AutoCloseable {
 
+    private final Reader reader;
+    private final CharBuffer uXXXX = CharBuffer.allocate(4);
+    private final char[] readBuf;
+    private final int tempBufScaleFactor;
+
+    private boolean isEnd = false;
     private int numIntSize = 0;
     private boolean numHasFrac = false;
     private boolean numHasExp = false;
-
-    private final Reader reader;
-
-    private final char[] readBuf;
     private int readOff = 0;
     private int readPos = 0;
-
-    private final CharBuffer uXXXX = CharBuffer.allocate(4);
-
     private char[] tempBuf;
-    private final int tempBufScaleFactor;
     private int tempLen;
     private int tempPos = 0;
 
@@ -139,9 +137,10 @@ public class JsonParser implements AutoCloseable {
         try {
             final int r = reader.read(readBuf);
             if (r == -1) {
-                throw new EOFException();
+                isEnd = true;
+            } else {
+                readOff = r;
             }
-            readOff = r;
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -300,6 +299,9 @@ public class JsonParser implements AutoCloseable {
             numIntSize++;
             while (true) {
                 c = read();
+                if (isEnd) {
+                    break;
+                }
                 if (isZeroNine(c)) {
                     append(c);
                     numIntSize++;
@@ -479,9 +481,11 @@ public class JsonParser implements AutoCloseable {
 
 //        final Parser p = new Parser(new StringReader("  [ true , false, [ true, false ], \"abc\" ] "));
 //        final Parser p = Parser.fromString("  [ true , false, [ true, false ], \"abc\" ] ");
-        final JsonParser p = JsonParser.fromFile(new File("100mb.json"));
+//        final JsonParser p = JsonParser.fromFile(new File("100mb.json"));
+
+        final JsonParser p = JsonParser.fromString("42");
         final long t1 = System.currentTimeMillis();
-        p.parse();
+        System.out.println(p.parse());
         final long t2 = System.currentTimeMillis();
         System.out.println(t2 - t1);
 //        final StringBuilder sb = new StringBuilder(4);
