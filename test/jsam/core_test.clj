@@ -178,10 +178,89 @@
            (vec items)))))
 
 
-#_
-(extend-custom [UUID uuid writer]
-  (.writeRaw writer "uuid:")
-  (.writeRaw writer (str uuid)))
+(deftest test-write-simple
+  (let [data1 {:foo 1
+               "bar" 1
+               "test" false
+               :arr [1 2 nil "hello"]
+               'foo 123.456}
+
+        string
+        (jsam/write-string data1)]
+
+    (is (= {:foo 123.456,
+            :bar 1,
+            :test false,
+            :arr [1 2 nil "hello"]}
+           (jsam/read-string string)))))
+
+
+(defrecord SomeRecord [a b c])
+
+(deftest test-write-extended-types
+  (let [data1 {:foo 1
+               "bar" #uuid "39c70c7d-2af8-48da-82b3-8b528d878a9f"
+               "test" (java.time.LocalDate/parse "2025-03-03")
+               :arr #"kek|lol"
+               :rec (new SomeRecord 'A 'B (new SomeRecord 1 2 3))
+               'foo (/ 3 4)
+               "dunno" ['lol (atom (atom 42)) (ref 100500)]}
+
+        string
+        (jsam/write-string data1)]
+
+    (is (= {:foo "3/4",
+            :bar "39c70c7d-2af8-48da-82b3-8b528d878a9f",
+            :test "2025-03-03",
+            :arr "kek|lol",
+            :rec {:a "A"
+                  :b "B"
+                  :c {:a 1 :b 2 :c 3}}
+            :dunno ["lol" 42 100500]}
+           (jsam/read-string string)))))
+
+
+(deftype SneakyType [a b c]
+  jsam/IJSON
+  (-encode [this writer]
+    (jsam/-encode ["I used to be a SneakyType" a b c] writer)))
+
+
+(deftest test-write-extended-types
+  (let [data1 {:foo (new SneakyType :a "b" 42)}
+
+        string
+        (jsam/write-string data1)]
+
+    (is (= {:foo ["I used to be a SneakyType" "a" "b" 42]}
+           (jsam/read-string string)))))
+
+
+(deftest test-write-pretty
+  (let [data1 {:arr [1 [1 {:hello 1} 3] 3]}
+
+        string
+        (jsam/write-string data1
+                           {:pretty? true
+                            :pretty-indent 3})]
+
+    (is (= data1
+           (jsam/read-string string)))
+
+    (is (= "{\r
+   \"arr\": [\r
+      1,\r
+      [\r
+         1,\r
+         {\r
+            \"hello\": 1\r
+         },\r
+         3\r
+      ],\r
+      3\r
+   ]\r
+}"
+           string))))
 
 
 

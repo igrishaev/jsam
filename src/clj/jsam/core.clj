@@ -2,7 +2,10 @@
   (:refer-clojure :exclude
                   [read read-string])
   (:import
-   (clojure.lang Keyword)
+   (clojure.lang Keyword
+                 Ratio
+                 Atom
+                 Ref)
    (java.io StringWriter)
    (java.time.temporal Temporal)
    (java.util List
@@ -268,9 +271,21 @@
   (-encode [this ^JsonWriter writer]
     (.writeBoolean writer this))
 
+  Ratio
+  (-encode [this ^JsonWriter writer]
+    (.writeString writer (str this)))
+
   Number
   (-encode [this ^JsonWriter writer]
     (.writeNumber writer this))
+
+  Atom
+  (-encode [this ^JsonWriter writer]
+    (-encode @this writer))
+
+  Ref
+  (-encode [this ^JsonWriter writer]
+    (-encode @this writer))
 
   List
   (-encode [this ^JsonWriter writer]
