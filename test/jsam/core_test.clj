@@ -1,7 +1,25 @@
 (ns jsam.core-test
+  (:import
+   (java.io File
+            Reader
+            StringReader))
   (:require
-   [clojure.test :refer [deftest is]]
+   [clojure.test :refer [deftest is testing]]
    [jsam.core :as jsam]))
+
+(defn get-temp-file
+  "
+  Return an temporal file, an instance of java.io.File class.
+  "
+  (^File []
+   (get-temp-file "tmp" ".tmp"))
+  (^File [prefix suffix]
+   (File/createTempFile prefix suffix)))
+
+
+;;
+;; READ
+;;
 
 (deftest test-it-works!
   (let [data {:foo 1
@@ -59,17 +77,105 @@
 (deftest test-number-float
   (let [num (jsam/read-string " -0.0 ")]
     (is (= -0.0 num))
-    (is (instance? Float num))))
+    (is (instance? Double num))))
 
 
-;; TODO: always Double
-;; parse bigdecimal flag
+(deftest test-read-multi
+  (testing "numbers"
+    (let [reader
+          (new StringReader "1 2 3")
 
-#_
+          iter
+          (jsam/parse-multi reader)]
+
+      (is (= [1 2 3]
+             (seq iter)))))
+
+  (testing "trailing item"
+    (let [reader
+          (new StringReader "{\"foo\": 123}\n42 \n null\ntrue  [1, 2 ,3]")
+
+          iter
+          (jsam/parse-multi reader)]
+
+      (is (= [{:foo 123} 42 nil true [1 2 3]]
+             (seq iter)))))
+
+  (testing "empty"
+    (testing "trailing item"
+    (let [reader
+          (new StringReader "")
+
+          iter
+          (jsam/parse-multi reader)]
+
+      (is (nil? (seq iter)))))))
+
+
+(deftest test-bigdec-flag
+  (let [res (jsam/read-string "42e999")]
+    (is (= ##Inf res)))
+  (let [res (jsam/read-string "42e999" {:bigdec? true})]
+    (is (= 4.2E+1000M res))
+    (is (instance? BigDecimal res))))
+
+
 (deftest test-number-double
   (let [num (jsam/read-string " 1.0+e100 ")]
-    (is (= -0.0 num))
-    (is (instance? Float num))))
+    (is (= 1.0 num))
+    (is (instance? Double num))))
+
+
+(deftest test-custom-suppliers
+  (let [arr-supplier
+        (reify java.util.function.Supplier
+          (get [this]
+            (let [state (atom [])]
+              (reify org.jsam.IArrayBuilder
+                (conj [this el]
+                  (swap! state clojure.core/conj (* el 10)))
+                (build [this]
+                  @state)))))
+
+        obj-supplier
+        (jsam/supplier
+          (let [state (atom {})]
+            (reify org.jsam.IObjectBuilder
+              (assoc [this k v]
+                (swap! state clojure.core/assoc k (* v 10)))
+              (build [this]
+                @state))))
+
+        res1
+        (jsam/read-string "[1, 2, 3]"
+                          {:arr-supplier arr-supplier})
+
+        res2
+        (jsam/read-string "{\"test\": 1}"
+                          {:obj-supplier obj-supplier})]
+
+    (is (= [10 20 30] res1))
+    (is (= {:test 10} res2))))
+
+
+;;
+;; WRITE
+;;
+
+(deftest test-write-multi
+
+  (let [file (get-temp-file)
+        coll (for [x (range 0 3)]
+               {:x x})
+
+        _
+        (jsam/write-multi file coll)
+
+        items
+        (jsam/parse-multi file)]
+
+    (is (= [{:x 0} {:x 1} {:x 2}]
+           (vec items)))))
 
 
 #_

@@ -1,5 +1,7 @@
 package org.jsam;
 
+import clojure.lang.IFn;
+
 import java.nio.charset.Charset;
 import java.util.function.Supplier;
 
@@ -11,7 +13,10 @@ public record Config(int readBufSize,
                      Supplier<IArrayBuilder> arrayBuilderSupplier,
                      Supplier<IObjectBuilder> objectBuilderSupplier,
                      boolean isPretty,
-                     int prettyIndent
+                     int prettyIndent,
+                     boolean useBigDecimal,
+                     IFn fnKey,
+                     String multiSeparator
 ) {
 
     @SuppressWarnings("unused")
@@ -33,6 +38,9 @@ public record Config(int readBufSize,
         private Supplier<IObjectBuilder> objectBuilderSupplier = Const.objectBuilderSupplier;
         private boolean isPretty = Const.isPretty;
         private int prettyIndent = Const.prettyIndent;
+        private boolean useBigDecimal = Const.useBigDecimal;
+        private IFn fnKey = Const.fnKey;
+        private String multiSeparator = Const.multiSeparator;
 
         @SuppressWarnings("unused")
         public Builder readBufSize(final int readBufSize) {
@@ -89,6 +97,24 @@ public record Config(int readBufSize,
         }
 
         @SuppressWarnings("unused")
+        public Builder useBigDecimal(final boolean useBigDecimal) {
+            this.useBigDecimal = useBigDecimal;
+            return this;
+        }
+
+        @SuppressWarnings("unused")
+        public Builder fnKey(final IFn fnKey) {
+            this.fnKey = fnKey;
+            return this;
+        }
+
+        @SuppressWarnings("unused")
+        public Builder multiSeparator(final String multiSeparator) {
+            this.multiSeparator = multiSeparator;
+            return this;
+        }
+
+        @SuppressWarnings("unused")
         public Config build() {
             return new Config(
                     readBufSize,
@@ -99,7 +125,10 @@ public record Config(int readBufSize,
                     arrayBuilderSupplier,
                     objectBuilderSupplier,
                     isPretty,
-                    prettyIndent
+                    prettyIndent,
+                    useBigDecimal,
+                    fnKey,
+                    multiSeparator
             );
         }
     }

@@ -39,11 +39,8 @@
   (is (= 123456789012345678901234567890N
          (jsam/read-string "123456789012345678901234567890"))))
 
-
-#_
 (deftest read-bigdec
-  (is (= 3.14159M (jsam/read-string "3.14159" ;; :bigdec true
-                                    ))))
+  (is (= 3.14159M (jsam/read-string "3.14159" {:bigdec? true}))))
 
 (deftest read-null
   (is (= nil (jsam/read-string "null"))))
@@ -80,21 +77,16 @@
          (jsam/read-string "{\"k1\": 1, \"k2\": 2, \"k3\": 3, \"k4\": 4,
                           \"k5\": 5, \"k6\": 6, \"k7\": 7, \"k8\": 8,
                           \"k9\": 9, \"k10\": 10, \"k11\": 11, \"k12\": 12,
-                          \"k13\": 13, \"k14\": 14, \"k15\": 15, \"k16\": 16}"
-                           ;; :key-fn keyword TODO
-                           ))))
+                          \"k13\": 13, \"k14\": 14, \"k15\": 15, \"k16\": 16}"))))
 
 (deftest read-nested-structures
   (is (= {:a [1 2 {:b [3 "four"]} 5.5]}
-         (jsam/read-string "{\"a\":[1,2,{\"b\":[3,\"four\"]},5.5]}"
-                           ;; :key-fn keyword TODO
-                           ))))
+         (jsam/read-string "{\"a\":[1,2,{\"b\":[3,\"four\"]},5.5]}"))))
 
 (deftest read-nested-structures-stream
-  (is (= {:a [1 2 {:b [3 "four"]} 5.5]}
+  (is (= {"a" [1 2 {"b" [3 "four"]} 5.5]}
          (jsam/read (java.io.StringReader. "{\"a\":[1,2,{\"b\":[3,\"four\"]},5.5]}")
-                    ;; :key-fn keyword TODO
-                    ))))
+                    {:fn-key identity}))))
 
 (deftest reads-long-string-correctly
   (let [long-string (str/join "" (take 100 (cycle "abcde")))]
@@ -118,16 +110,15 @@
   (is (thrown? Exception (jsam/read-string "{\"a\":1,,,,}")))
   (is (thrown? Exception (jsam/read-string "{\"a\":1,,\"b\":2}"))))
 
-#_
-;; TODO
 (deftest get-string-keys
   (is (= {"a" [1 2 {"b" [3 "four"]} 5.5]}
-         (jsam/read-string "{\"a\":[1,2,{\"b\":[3,\"four\"]},5.5]}"))))
+         (jsam/read-string "{\"a\":[1,2,{\"b\":[3,\"four\"]},5.5]}"
+                           {:fn-key identity}))))
 
-;; (deftest keywordize-keys
-;;   (is (= {:a [1 2 {:b [3 "four"]} 5.5]}
-;;          (charred/read-json "{\"a\":[1,2,{\"b\":[3,\"four\"]},5.5]}"
-;;                     :key-fn keyword))))
+(deftest keywordize-keys
+  (is (= {:a [1 2 {:b [3 "four"]} 5.5]}
+         (jsam/read-string "{\"a\":[1,2,{\"b\":[3,\"four\"]},5.5]}"
+                           {:fn-key keyword}))))
 
 ;; (deftest convert-values
 ;;   (is (= {:number 42 :date (java.sql.Date. 55 6 12)}
@@ -213,20 +204,12 @@
 
 
 (deftest pass1-test
-  ;; TODO: keywords
-  (let [input (jsam/read-string pass1-string)]
+  (let [input (jsam/read-string pass1-string
+                                {:fn-key identity})]
     (is (= "JSON Test Pattern pass1" (first input)))
-    (is (= "array with 1 element" (get-in input [1 (keyword "object with 1 member") 0])))
-    (is (= 1234567890 (get-in input [8 (keyword "integer")])))
+    (is (= "array with 1 element" (get-in input [1 "object with 1 member" 0])))
+    (is (= 1234567890 (get-in input [8 "integer"])))
     (is (= "rosebud" (last input)))))
-
-
-;; (defn- double-value [_ v]
-;;   (if (and (instance? Double v)
-;;            (or (.isNaN ^Double v)
-;;                (.isInfinite ^Double v)))
-;;     (str v)
-;;     v))
 
 
 (deftest read-empty-string
@@ -255,10 +238,10 @@
 ;;     (is (= js-data (charred/read-json input :key-fn keyword :bufsize 7)))))
 
 
-;; (deftest namespace-kwd
-;;   (let [src-data #:a{:a 1, :b 2}]
-;;     (is (= src-data (-> (charred/write-json-str src-data)
-;;                         (charred/read-json :key-fn keyword))))))
+(deftest namespace-kwd
+  (let [src-data #:a{:a 1, :b 2}]
+    (is (= src-data (-> (jsam/write-string src-data)
+                        (jsam/read-string))))))
 
 
 ;; (deftest packed-serialization

@@ -5,10 +5,10 @@ import java.util.Map;
 
 public class JavaMapBuilder implements IObjectBuilder {
 
-    private final Map<String, Object> map = new HashMap<>();
+    private final Map<Object, Object> map = new HashMap<>();
 
     @Override
-    public void assoc(String key, Object val) {
+    public void assoc(final Object key, final Object val) {
         map.put(key, val);
     }
 

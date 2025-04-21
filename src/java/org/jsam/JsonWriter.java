@@ -46,6 +46,14 @@ public class JsonWriter implements AutoCloseable {
     }
 
     @SuppressWarnings("unused")
+    public void writeMulti(final Iterable<Object> iter) throws IOException {
+        for (Object object: iter) {
+            write(object);
+            writer.write(Const.multiSeparator);
+        }
+    }
+
+    @SuppressWarnings("unused")
     public void writeNull(final Object ignored) throws IOException {
         writer.write("null");
     }

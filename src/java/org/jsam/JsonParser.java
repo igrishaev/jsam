@@ -1,5 +1,7 @@
 package org.jsam;
 
+import clojure.lang.IFn;
+
 import java.io.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -17,7 +19,7 @@ public class JsonParser implements AutoCloseable {
     private final char[] readBuf;
     private final int tempBufScaleFactor;
 
-    private boolean isEnd = false;
+    private boolean isEOF = false;
     private int numIntSize = 0;
     private boolean numHasFrac = false;
     private boolean numHasExp = false;
@@ -40,7 +42,7 @@ public class JsonParser implements AutoCloseable {
         } else {
             this.readBuf = readBuf;
             this.readOff = readBuf.length;
-            this.isEnd = readBuf.length == 0;
+            this.isEOF = readBuf.length == 0;
         }
         this.tempBufScaleFactor = config.tempBufScaleFactor();
         this.tempLen = config.tempBufSize();
@@ -143,14 +145,17 @@ public class JsonParser implements AutoCloseable {
         }
         if (r > 0) {
             readOff = r;
-        } else if (r == 0) {
-            throw error("reader is empty");
+        } else if (r < 0) {
+            isEOF = true;
         } else {
-            isEnd = true;
+            throw error("reader is empty");
         }
     }
 
     private char read() {
+        if (isEOF) {
+            throw error("EOF of content is met");
+        }
         if (readPos == readOff) {
             readMore();
             readPos = 0;
@@ -163,13 +168,13 @@ public class JsonParser implements AutoCloseable {
     }
 
     private void ws() {
-        if (isEnd) {
+        if (isEOF) {
             return;
         }
         char c;
         while (true) {
             c = read();
-            if (isEnd) {
+            if (isEOF) {
                 break;
             }
             if (!(c == ' ' || c == '\r' || c == '\n' || c == '\t')) {
@@ -186,6 +191,7 @@ public class JsonParser implements AutoCloseable {
         if (c != '{') {
             throw error("reading object: expected '{' but got '%s'", c);
         }
+        final IFn fnKey = config.fnKey();
         final IObjectBuilder builder = objectBuilderSupplier.get();
         boolean repeat = true;
         ws();
@@ -204,7 +210,7 @@ public class JsonParser implements AutoCloseable {
             }
             ws();
             Object val = readAny();
-            builder.assoc(key, val);
+            builder.assoc(fnKey.invoke(key), val);
             ws();
             c = read();
             if (c != ',') {
@@ -258,15 +264,16 @@ public class JsonParser implements AutoCloseable {
     }
 
     @SuppressWarnings("unused")
-    public Iterator<Object> parseIter() {
-        return new Iterator<>() {
+    public Iterable<Object> parseMulti() {
+        return () -> new Iterator<>() {
             @Override
             public boolean hasNext() {
-                return !isEnd;
+                ws();
+                return !isEOF;
             }
             @Override
             public Object next() {
-                if (isEnd) {
+                if (isEOF) {
                     throw error("JSON parse iteration is over");
                 } else {
                     return parse();
@@ -277,7 +284,7 @@ public class JsonParser implements AutoCloseable {
 
     private Object readAny() {
         ws();
-        if (isEnd) {
+        if (isEOF) {
             return null;
         }
         char c = read();
@@ -304,7 +311,7 @@ public class JsonParser implements AutoCloseable {
         }
         while (true) {
             c = read();
-            if (isEnd) {
+            if (isEOF) {
                 break;
             }
             if (isZeroNine(c)) {
@@ -333,7 +340,7 @@ public class JsonParser implements AutoCloseable {
             numIntSize++;
             while (true) {
                 c = read();
-                if (isEnd) {
+                if (isEOF) {
                     break;
                 }
                 if (isZeroNine(c)) {
@@ -351,6 +358,9 @@ public class JsonParser implements AutoCloseable {
 
     private void readFraction() {
         numHasFrac = false;
+        if (isEOF) {
+            return;
+        }
         char c = read();
         if (c == '.') {
             append('.');
@@ -363,6 +373,9 @@ public class JsonParser implements AutoCloseable {
 
     private void readExponent() {
         numHasExp = false;
+        if (isEOF) {
+            return;
+        }
         char c = read();
         if (c == 'e' || c == 'E') {
             numHasExp = true;
@@ -384,7 +397,7 @@ public class JsonParser implements AutoCloseable {
         }
     }
 
-    private static Number parseNumber(final String string,
+    private Number parseNumber(final String string,
                                       final int intFigures,
                                       final boolean hasFrac,
                                       final boolean hasExp) {
@@ -399,11 +412,10 @@ public class JsonParser implements AutoCloseable {
                 return new BigInteger(string);
             }
         } else {
-            final double d = Double.parseDouble(string);
-            if (Double.isInfinite(d)) {
+            if (config().useBigDecimal()) {
                 return new BigDecimal(string);
             } else {
-                return d;
+                return Double.parseDouble(string);
             }
         }
     }
@@ -467,7 +479,7 @@ public class JsonParser implements AutoCloseable {
         }
         while (true) {
             c = read();
-            if (isEnd) {
+            if (isEOF) {
                 throw error("unexpected end of JSON: %s", dumpBuf(tempBuf, tempPos));
             }
             if (c == '"') {
@@ -527,15 +539,15 @@ public class JsonParser implements AutoCloseable {
 //        final Parser p = Parser.fromString("  [ true , false, [ true, false ], \"abc\" ] ");
 //        final JsonParser p = JsonParser.fromFile(new File("100mb.json"));
 
-        final JsonParser p = JsonParser.fromString("1 2 3");
+        final JsonParser p = JsonParser.fromReader(new StringReader("[] 1 [][]true1"));
 //        final JsonParser p = JsonParser.fromReader(new StringReader("\"missing end quote"));
         final long t1 = System.currentTimeMillis();
-        final Iterator<Object> iter = p.parseIter();
+        final Iterable<Object> iter = p.parseMulti();
 
-        while (iter.hasNext()) {
-            System.out.println(iter.next());
+        for (Object object: iter) {
+            System.out.println(object);
         }
-        
+
 
 //        System.out.println(iter.hasNext());
 //        System.out.println(iter.next());

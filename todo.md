@@ -1,7 +1,4 @@
 
-lazy iter parse
-fn-key func default keyword
-bigdec?
 
 keep java reader?
 rollback writeArray(List)?
@@ -30,14 +27,6 @@ tests
 bench
 - vs jsonista
 - vs chesire
-
-move number decoding into a separate method
-
-create clojure api ns
-- write
-- write-to-string
-- read
-- read-from-string
 
 test encode:
 - java.time

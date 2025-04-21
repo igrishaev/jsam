@@ -1,14 +1,20 @@
 (ns jsam.core
-  (:refer-clojure :exclude [read read-string])
+  (:refer-clojure :exclude
+                  [read read-string])
   (:import
-   [clojure.lang Keyword Symbol]
-   [java.io StringWriter]
-   [java.time.temporal Temporal]
-   [java.util List Map UUID Date]
-   [java.util.function Supplier]
-   [java.util.regex Pattern]
-   [org.jsam JsonParser JsonWriter Config])
-  (:use criterium.core)
+   (clojure.lang Keyword)
+   (java.io StringWriter)
+   (java.time.temporal Temporal)
+   (java.util List
+              Map
+              UUID
+              Date)
+   (java.util.function Supplier)
+   (java.util.regex Pattern)
+   (org.jsam JsonParser
+             JsonWriter
+             Config
+             Suppliers))
   (:require
    [clojure.java.io :as io]))
 
@@ -24,10 +30,47 @@
    `(throw (org.jsam.Error/error (format ~template ~@args)))))
 
 
+;;
+;; Suppliers
+;;
+
 (defmacro supplier [& body]
   `(reify Supplier
      (get [this#]
        ~@body)))
+
+
+(def ^Supplier sup-arr-java
+  "
+  A supplier that reads a JSON array into
+  a mutable Java ArrayList instance.
+  "
+  Suppliers/ARR_JAVA_LIST)
+
+
+(def ^Supplier sup-obj-java
+  "
+  A supplier that reads a JSON object into
+  a mutable Java HashMap instance.
+  "
+  Suppliers/OBJ_JAVA_MAP)
+
+
+(def ^Supplier sup-arr-clj
+  "
+  A supplier that reads a JSON array into
+  a persistent Clojure vector
+  "
+  Suppliers/ARR_CLJ_VEC)
+
+
+(def ^Supplier sup-obj-clj
+  "
+  A supplier that reads a JSON object into
+  a persistent Clojure map.
+  "
+  Suppliers/OBJ_CLJ_MAP)
+
 
 
 ;;
@@ -43,10 +86,13 @@
                   temp-buf-size
                   parser-charset
                   writer-charset
-                  array-builder-supplier
-                  object-builder-supplier
+                  arr-supplier
+                  obj-supplier
                   pretty?
-                  pretty-indent]}
+                  pretty-indent
+                  bigdec?
+                  fn-key
+                  multi-separator]}
           opt]
 
       (cond-> (Config/builder)
@@ -66,17 +112,26 @@
         writer-charset
         (.writerCharset writer-charset)
 
-        array-builder-supplier
-        (.arrayBuilderSupplier array-builder-supplier)
+        arr-supplier
+        (.arrayBuilderSupplier arr-supplier)
 
-        object-builder-supplier
-        (.objectBuilderSupplier object-builder-supplier)
+        obj-supplier
+        (.objectBuilderSupplier obj-supplier)
 
         (some? pretty?)
         (.isPretty pretty?)
 
         pretty-indent
         (.prettyIndent pretty-indent)
+
+        (some? bigdec?)
+        (.useBigDecimal bigdec?)
+
+        fn-key
+        (.fnKey fn-key)
+
+        multi-separator
+        (.multiSeparator multi-separator)
 
         :finally
         (.build)))))
@@ -102,16 +157,6 @@
      (.parse p))))
 
 
-;; TODO:
-(defn read-file
-  ([file]
-   (read-file file nil))
-
-  ([file opt]
-   (with-open [p (JsonParser/fromFile file (->config opt))]
-     (.parse p))))
-
-
 (defn read-string
   "
   Read data from a string. Works a bit faster than `read` as
@@ -123,6 +168,19 @@
   ([^String string opt]
    (with-open [p (JsonParser/fromString string (->config opt))]
      (.parse p))))
+
+
+(defn read-multi
+  "
+  Get a lazy sequence of JSON parsed items written one by one.
+  Should be used under the `with-open` macro.
+  "
+  ([src]
+   (read-multi src nil))
+
+  ([src opt]
+   (-> (JsonParser/fromReader (io/reader src) (->config opt))
+       (.parseMulti))))
 
 
 ;;
@@ -163,6 +221,16 @@
      (.toString out))))
 
 
+(defn write-multi
+  ([dest coll]
+   (write-multi dest coll nil))
+
+  ([dest coll opt]
+   (with-open [out (io/writer dest)
+               jwr (JsonWriter/create out -encode (->config opt))]
+     (.writeMulti jwr coll))))
+
+
 ;;
 ;; Writer extensions
 ;;
@@ -182,13 +250,6 @@
        ~@body)))
 
 
-(extend-as-string Pattern)
-(extend-as-string UUID)
-(extend-as-string Temporal)
-(extend-as-string Date)
-(extend-as-string Symbol)
-
-
 (extend-protocol IJSON
 
   nil
@@ -197,8 +258,7 @@
 
   Object
   (-encode [this ^JsonWriter writer]
-    (error! "don't know how to JSON-encode an object, type: %s, value: %s"
-            (type this) this))
+    (.writeString writer (str this)))
 
   String
   (-encode [this ^JsonWriter writer]
@@ -227,6 +287,7 @@
 
 (comment
 
+  (:use criterium.core)
   (require '[clojure.data.json :as data.json])
   (require '[jsonista.core :as json])
   (require '[cheshire.core :as cheshire])
