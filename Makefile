@@ -12,3 +12,6 @@ repl: clear
 .PHONY: test
 test:
 	lein test
+
+install:
+	lein install

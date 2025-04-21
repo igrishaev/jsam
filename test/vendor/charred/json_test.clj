@@ -1,9 +1,12 @@
 (ns vendor.charred.json-test
+  "
+  An adapted test suite borrowed from here:
+  https://github.com/cnuernber/charred/blob/master/test/charred/json_test.clj
+  "
   (:require
    [jsam.core :as jsam]
    [clojure.test :refer :all]
    [clojure.string :as str]))
-
 
 (deftest read-from-pushback-reader
   (is (= 42 (jsam/read-string "42"))))

@@ -505,13 +505,13 @@ public class JsonParser implements AutoCloseable {
 
 //        final Parser p = new Parser(new StringReader("  [ true , false, [ true, false ], \"abc\" ] "));
 //        final Parser p = Parser.fromString("  [ true , false, [ true, false ], \"abc\" ] ");
-        final JsonParser p = JsonParser.fromFile(new File("100mb.json"));
+//        final JsonParser p = JsonParser.fromFile(new File("100mb.json"));
 
-//        final JsonParser p = JsonParser.fromString("   ");
+        final JsonParser p = JsonParser.fromString("2@");
 //        final JsonParser p = JsonParser.fromReader(new StringReader("\"missing end quote"));
         final long t1 = System.currentTimeMillis();
-//        System.out.println(p.parse());
-        p.parse();
+        System.out.println(p.parse());
+//        p.parse();
         final long t2 = System.currentTimeMillis();
         System.out.println(t2 - t1);
 //        final StringBuilder sb = new StringBuilder(4);
