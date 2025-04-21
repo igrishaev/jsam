@@ -238,21 +238,6 @@
 ;; Writer extensions
 ;;
 
-(defmacro extend-as-string [Type]
-  (let [writer (with-meta (gensym "writer") {:tag `JsonWriter})]
-    `(extend-protocol IJSON
-       ~Type
-       (-encode [this# ~writer]
-         (.writeString ~writer (str this#))))))
-
-
-(defmacro extend-custom [[Type value ^JsonWriter writer] & body]
-  `(extend-protocol IJSON
-     ~Type
-     (-encode [~value ~writer]
-       ~@body)))
-
-
 (extend-protocol IJSON
 
   nil

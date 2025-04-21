@@ -86,7 +86,7 @@
           (new StringReader "1 2 3")
 
           iter
-          (jsam/parse-multi reader)]
+          (jsam/read-multi reader)]
 
       (is (= [1 2 3]
              (seq iter)))))
@@ -96,7 +96,7 @@
           (new StringReader "{\"foo\": 123}\n42 \n null\ntrue  [1, 2 ,3]")
 
           iter
-          (jsam/parse-multi reader)]
+          (jsam/read-multi reader)]
 
       (is (= [{:foo 123} 42 nil true [1 2 3]]
              (seq iter)))))
@@ -107,7 +107,7 @@
           (new StringReader "")
 
           iter
-          (jsam/parse-multi reader)]
+          (jsam/read-multi reader)]
 
       (is (nil? (seq iter)))))))
 
@@ -172,7 +172,7 @@
         (jsam/write-multi file coll)
 
         items
-        (jsam/parse-multi file)]
+        (jsam/read-multi file)]
 
     (is (= [{:x 0} {:x 1} {:x 2}]
            (vec items)))))
