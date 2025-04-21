@@ -3,9 +3,8 @@
 
 [wiki]: https://metalgear.fandom.com/wiki/Samuel_Rodrigues
 
-A lightweight, zero-deps JSON parser and writer. Named after [this guy][wiki].
-
-***
+A lightweight, zero-deps JSON parser and writer. Named after [Jetstream
+Sam][wiki].
 
 - Small: only 14 Java files with no extra libraries;
 - Not the fastest one but is pretty good (see the chart below);
