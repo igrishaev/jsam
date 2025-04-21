@@ -135,15 +135,18 @@ public class JsonParser implements AutoCloseable {
     }
 
     private void readMore() {
+        final int r;
         try {
-            final int r = reader.read(readBuf);
-            if (r == -1) {
-                isEnd = true;
-            } else {
-                readOff = r;
-            }
+            r = reader.read(readBuf);
         } catch (IOException e) {
-            throw new UncheckedIOException(e);
+            throw error(e, "failed read from reader");
+        }
+        if (r > 0) {
+            readOff = r;
+        } else if (r == 0) {
+            throw error("reader is empty");
+        } else {
+            isEnd = true;
         }
     }
 
@@ -252,6 +255,24 @@ public class JsonParser implements AutoCloseable {
     @SuppressWarnings("UnusedReturnValue")
     public Object parse() {
         return readAny();
+    }
+
+    @SuppressWarnings("unused")
+    public Iterator<Object> parseIter() {
+        return new Iterator<>() {
+            @Override
+            public boolean hasNext() {
+                return !isEnd;
+            }
+            @Override
+            public Object next() {
+                if (isEnd) {
+                    throw error("JSON parse iteration is over");
+                } else {
+                    return parse();
+                }
+            }
+        };
     }
 
     private Object readAny() {
@@ -378,12 +399,11 @@ public class JsonParser implements AutoCloseable {
                 return new BigInteger(string);
             }
         } else {
-            if (intFigures < 38) {
-                return Float.parseFloat(string);
-            } else if (intFigures < 307) {
-                return Double.parseDouble(string);
-            } else {
+            final double d = Double.parseDouble(string);
+            if (Double.isInfinite(d)) {
                 return new BigDecimal(string);
+            } else {
+                return d;
             }
         }
     }
@@ -507,13 +527,31 @@ public class JsonParser implements AutoCloseable {
 //        final Parser p = Parser.fromString("  [ true , false, [ true, false ], \"abc\" ] ");
 //        final JsonParser p = JsonParser.fromFile(new File("100mb.json"));
 
-        final JsonParser p = JsonParser.fromString("2@");
+        final JsonParser p = JsonParser.fromString("1 2 3");
 //        final JsonParser p = JsonParser.fromReader(new StringReader("\"missing end quote"));
         final long t1 = System.currentTimeMillis();
-        System.out.println(p.parse());
+        final Iterator<Object> iter = p.parseIter();
+
+        while (iter.hasNext()) {
+            System.out.println(iter.next());
+        }
+        
+
+//        System.out.println(iter.hasNext());
+//        System.out.println(iter.next());
+//
+//        System.out.println(iter.hasNext());
+//        System.out.println(iter.next());
+//
+//        System.out.println(iter.hasNext());
+//        System.out.println(iter.next());
+//
+//        System.out.println(iter.hasNext());
+//        System.out.println(iter.next());
+//        System.out.println(iter.next());
 //        p.parse();
         final long t2 = System.currentTimeMillis();
-        System.out.println(t2 - t1);
+//        System.out.println(t2 - t1);
 //        final StringBuilder sb = new StringBuilder(4);
 //        System.out.println(sb.hashCode());
 
