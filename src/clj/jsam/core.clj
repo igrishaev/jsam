@@ -7,13 +7,9 @@
                  Atom
                  Ref)
    (java.io StringWriter)
-   (java.time.temporal Temporal)
    (java.util List
-              Map
-              UUID
-              Date)
+              Map)
    (java.util.function Supplier)
-   (java.util.regex Pattern)
    (org.jsam JsonParser
              JsonWriter
              Config
@@ -241,7 +237,7 @@
 (extend-protocol IJSON
 
   nil
-  (-encode [this ^JsonWriter writer]
+  (-encode [_this ^JsonWriter writer]
     (.writeNull writer nil))
 
   Object
@@ -285,62 +281,59 @@
     (.writeString writer (-> this str (subs 1)))))
 
 
+#_:clj-kondo/ignore
 (comment
 
-  (:use criterium.core)
+  (use 'criterium.core)
   (require '[clojure.data.json :as data.json])
   (require '[jsonista.core :as json])
   (require '[cheshire.core :as cheshire])
 
+  (import 'java.io.ByteArrayOutputStream)
+
+  ;;
+  ;; Read
+  ;;
+
   ;; jsam
   (quick-bench
-      (read-file (io/file "100mb.json")))
+      (read (io/file "100mb.json")))
 
   ;; jsonista
   (quick-bench
-      (json/read-value (io/file "100mb.json")))
+   (json/read-value (io/file "100mb.json")))
+
+  ;; cheshire
+  (quick-bench
+   (with-open [r (io/reader (io/file "100mb.json"))]
+     (cheshire/parse-stream r)))
 
   ;; data.json
   (quick-bench
       (with-open [r (io/reader (io/file "100mb.json"))]
         (data.json/read r)))
 
+  ;;
+  ;; Write
+  ;;
+
+  (def DATA
+    (read (io/file "100mb.json")))
+
+  ;; jsam
+  (quick-bench
+      (write-string DATA))
+
+  ;; jsonista
+  (quick-bench
+      (json/write-value-as-string DATA))
+
   ;; cheshire
   (quick-bench
-      (with-open [r (io/reader (io/file "100mb.json"))]
-        (cheshire/parse-stream r)))
+   (cheshire/generate-string DATA))
 
-  (def content
-    (slurp "data.json"))
-
-  (def content-2
-    (slurp "data2.json"))
-
-  (def content-100mb
-    (slurp "100mb.json"))
-
-  (def data-100mb
-    (json/read-value content))
-
+  ;; data.json
   (quick-bench
-      (json/write-value-as-string data-100mb))
-
-  (quick-bench
-      (write-to-string data-100mb))
-
-  ;; string
-  (quick-bench
-      (parse2 content))
-
-  (quick-bench
-      (json/read-value content))
-
-  (quick-bench
-      (data.json/read-str content))
-
-  (json/write-value (io/file "data2.json")
-                    (vec
-                     (for [x (range 1000)]
-                       [true false "hello"])))
+      (data.json/write-str DATA))
 
   )

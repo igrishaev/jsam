@@ -2,20 +2,35 @@
 
 (defproject com.github.igrishaev/jsam "0.1.0-SNAPSHOT"
 
+  :license
+  {:name "The Unlicense"
+   :url "https://unlicense.org/"}
+
+  :description
+  "A lightweight, zero-deps JSON parser and writer"
+
+  :deploy-repositories
+  {"releases"
+   {:url "https://repo.clojars.org"
+    :creds :gpg}
+   "snapshots"
+   {:url "https://repo.clojars.org"
+    :creds :gpg}}
+
   :managed-dependencies
   [[org.clojure/clojure "1.11.1"]
-   ;; [metosin/jsonista "0.3.8"]
+   [metosin/jsonista "0.3.8"]
    [cheshire "6.0.0"]
    [org.clojure/data.json "2.5.1"]
    [criterium "0.4.6"]]
 
   :dependencies
-  [[org.clojure/clojure]]
+  [[org.clojure/clojure :scope "provided"]]
 
   :profiles
   {:dev
    {:dependencies
-    [#_[metosin/jsonista]
+    [[metosin/jsonista]
      [cheshire]
      [org.clojure/data.json]
      [criterium]]

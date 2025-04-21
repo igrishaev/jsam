@@ -1,3 +1,5 @@
+all: lint test install
+
 download-json:
 	wget https://github.com/seductiveapps/largeJSON/raw/master/100mb.json
 
@@ -15,3 +17,6 @@ test:
 
 install:
 	lein install
+
+lint:
+	clj-kondo --lint src
