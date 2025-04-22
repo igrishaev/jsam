@@ -17,10 +17,10 @@ Requires Java version at least 17. Add a new dependency:
 
 ~~~clojure
 ;; lein
-[com.github.igrishaev/jsam "0.1.0-SNAPSHOT"]
+[com.github.igrishaev/jsam "0.1.0"]
 
 ;; deps
-com.github.igrishaev/jsam {:mvn/version "0.1.0-SNAPSHOT"}
+com.github.igrishaev/jsam {:mvn/version "0.1.0"}
 ~~~
 
 Import the library:
