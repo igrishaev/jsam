@@ -227,7 +227,129 @@ The content of the data5.json file:
 }
 ~~~
 
-## On Types and Extending
+## Type Mapping and Extending
+
+This chapter covers how to control type mapping between Clojure and JSON realms.
+
+Writing is served using a protocol named `jsam.core/IJSON` with a single encidng
+method:
+
+~~~clojure
+(defprotocol IJSON
+  (-encode [this writer]))
+~~~
+
+The default mapping is the following:
+
+| Clojure | JSON   | Comment                   |
+|---------|--------|---------------------------|
+| nil     | null   |                           |
+| String  | string |                           |
+| Boolean | bool   |                           |
+| Number  | number |                           |
+| Ratio   | string | e.g. `(/ 3 2)` -> `"3/2"` |
+| Atom    | any    | gets `deref`-ed           |
+| Ref     | any    | gets `deref`-ed           |
+| List    | array  | lazy seqs as well         |
+| Map     | object | keys coerced to strings   |
+| Keyword | string | leading `:` is trimmed    |
+
+Anything else gets encoded like a string using the `.toString` invocation under
+the hood:
+
+~~~clojure
+(extend-protocol IJSON
+  ...
+  Object
+  (-encode [this ^JsonWriter writer]
+    (.writeString writer (str this)))
+  ...)
+~~~
+
+Here is how you override encoding. Imagine you have a special type `SneakyType`:
+
+~~~clojure
+(deftype SneakyType [a b c]
+
+  ;; some protocols...
+
+  jsam/IJSON
+  (-encode [this writer]
+    (jsam/-encode ["I used to be a SneakyType" a b c] writer)))
+~~~
+
+Test it:
+
+~~~clojure
+(let [data1 {:foo (new SneakyType :a "b" 42)}
+      string (jsam/write-string data1)]
+  (jsam/read-string string))
+
+;; {:foo ["I used to be a SneakyType" "a" "b" 42]}
+~~~
+
+When reading the data, there is a way to specify how array and object values get
+collected. Options `:arr-supplier` and `:obj-supplier` accept a `Supplier`
+instance where the `get` method returns instances of `IArrayBuilder` or
+`IObjectBuilder` interfaces. Each interface knows how to add a value into a
+collection how to finalize it.
+
+Default implementations build Clojure persistent collections like
+`PersistentVector` or `PersistenHashMap`. There is a couple of Java-specific
+suppliers that build `ArrayList` and `HashMap`, respectively. Here is how you
+use them:
+
+~~~clojure
+(jsam/read-string "[1, 2, 3]"
+                  {:arr-supplier jsam/sup-arr-java})
+
+;; [1 2 3]
+;; java.util.ArrayList
+
+(jsam/read-string "{\"test\": 42}"
+                  {:obj-supplier jsam/sup-obj-java})
+
+;; {:test 42}
+;; java.util.HashMap
+~~~
+
+Here are some crazy examples that allow to modify data while you build
+collections. For an array:
+
+~~~clojure
+(let [arr-supplier
+      (reify java.util.function.Supplier
+        (get [this]
+          (let [state (atom [])]
+            (reify org.jsam.IArrayBuilder
+              (conj [this el]
+                (swap! state clojure.core/conj (* el 10)))
+              (build [this]
+                @state)))))]
+
+  (jsam/read-string "[1, 2, 3]"
+                    {:arr-supplier arr-supplier}))
+
+;; [10 20 30]
+~~~
+
+And for an object:
+
+~~~clojure
+(let [obj-supplier
+      (jsam/supplier
+        (let [state (atom {})]
+          (reify org.jsam.IObjectBuilder
+            (assoc [this k v]
+              (swap! state clojure.core/assoc k (* v 10)))
+            (build [this]
+              @state))))]
+
+  (jsam/read-string "{\"test\": 1}"
+                    {:obj-supplier obj-supplier}))
+
+;; {:test 10}
+~~~
 
 ## Benchmarks
 
