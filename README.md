@@ -368,6 +368,30 @@ Measured on MacBook M3 Pro 36Gb.
 
 ![](/media/benches.svg)
 
+[p-himik]: https://github.com/p-himik
+
+Another benchmark made by [Eugene Pakhomov][p-himik]. Reading:
+
+| size   | jsam mean | data.json | cheshire | jsonista | jsoniter | charred |
+|--------|-----------|-----------|----------|----------|----------|---------|
+| 10 b   | 182 ns    | 302 ns    | 800 ns   | 230 ns   | 101 ns   | 485 ns  |
+| 100 b  | 827 ns    | 1 µs      | 2 µs     | 1 µs     | 504 ns   | 1 µs    |
+| 1 kb   | 5 µs      | 8 µs      | 9 µs     | 6 µs     | 3 µs     | 5 µs    |
+| 10 kb  | 58 µs     | 108 µs    | 102 µs   | 58 µs    | 36 µs    | 59 µs   |
+| 100 kb | 573 µs    | 1 ms      | 968 µs   | 596 µs   | 379 µs   | 561 µs  |
+
+Writing:
+
+| size   | jsam mean | data.json | cheshire | jsonista | jsoniter | charred |
+|--------|-----------|-----------|----------|----------|----------|---------|
+| 10 b   | 229 ns    | 491 ns    | 895 ns   | 185 ns   | 2 µs     | 326 ns  |
+| 100 b  | 2 µs      | 3 µs      | 2 µs     | 540 ns   | 3 µs     | 351 ns  |
+| 1 kb   | 14 µs     | 14 µs     | 8 µs     | 3 µs     | 8 µs     | 88 ns   |
+| 10 kb  | 192 µs    | 165 µs    | 85 µs    | 29 µs    | 96 µs    | 10 µs   |
+| 100 kb | 2 ms      | 2 ms      | 827 µs   | 325 µs   | 881 µs   | 88 µs   |
+
+Measured on i7-9700K.
+
 ## On Tests
 
 One can be interested in how this library was tested. Although being considered
