@@ -13,7 +13,7 @@ Sam][wiki].
 
 ## Installation
 
-Add a new dependency:
+Requires Java version at least 17. Add a new dependency:
 
 ~~~clojure
 ;; lein

@@ -17,6 +17,17 @@
    {:url "https://repo.clojars.org"
     :creds :gpg}}
 
+  :release-tasks
+  [["vcs" "assert-committed"]
+   ["test"]
+   ["change" "version" "leiningen.release/bump-version" "release"]
+   ["vcs" "commit"]
+   ["vcs" "tag" "--no-sign"]
+   ["deploy"]
+   ["change" "version" "leiningen.release/bump-version"]
+   ["vcs" "commit"]
+   ["vcs" "push"]]
+
   :managed-dependencies
   [[org.clojure/clojure "1.11.1"]
    [metosin/jsonista "0.3.8"]

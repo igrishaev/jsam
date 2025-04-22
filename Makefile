@@ -20,3 +20,6 @@ install:
 
 lint:
 	clj-kondo --lint src
+
+release: lint test
+	lein release
