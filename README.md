@@ -360,7 +360,7 @@ Cheshire. But it's times faster than data.json which is written in pure Clojure
 and thus is so slow.
 
 The chart below renders my measures of reading a 100MB Json file. Then the data
-read from this file were dumped into a string. It's pretty clear that Json is
+read from this file were dumped into a string. It's pretty clear that Jsam is
 not the best nor the worst one in this competition. I'll keep the question of
 performance for further work.
 
