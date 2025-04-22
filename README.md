@@ -59,16 +59,16 @@ Both functions accept an optional map of settings:
 
 Here is a table of options that affect reading:
 
-| option                   | default       | comment                              |
-|--------------------------|---------------|--------------------------------------|
-| `:read-buf-size`         | 8k            | Size of a buffer to read             |
-| `:temp-buf-scale-factor` | 2             | Scale factor for an innter buffer    |
-| `:temp-buf-size`         | 255           | Inner temp buffer initial size       |
-| `:parser-charset`        | UTF-8         | Must be an instance of `Charset`     |
-| `:arr-supplier`          | `ARR_CLJ_VEC` | An object to collect array values    |
-| `:obj-supplier`          | `OBJ_CLJ_MAP` | An object to collect key-value pairs |
-| `:bigdec?`               | `false`       | Use BigDecimal when parsing numbers  |
-| `:fn-key`                | `keyword`     | A function to process keys           |
+| option                   | default                 | comment                              |
+|--------------------------|-------------------------|--------------------------------------|
+| `:read-buf-size`         | 8k                      | Size of a buffer to read             |
+| `:temp-buf-scale-factor` | 2                       | Scale factor for an innter buffer    |
+| `:temp-buf-size`         | 255                     | Inner temp buffer initial size       |
+| `:parser-charset`        | UTF-8                   | Must be an instance of `Charset`     |
+| `:arr-supplier`          | `jsam.core/sup-arr-clj` | An object to collect array values    |
+| `:obj-supplier`          | `jsam.core/sup-obj-clj` | An object to collect key-value pairs |
+| `:bigdec?`               | `false`                 | Use BigDecimal when parsing numbers  |
+| `:fn-key`                | `keyword`               | A function to process keys           |
 
 If you want keys to stay strings, and parse large numbers using `BigDecimal` to
 avoid infinite values, this is what you pass:
