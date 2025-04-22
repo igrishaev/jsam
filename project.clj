@@ -1,6 +1,6 @@
 (def MIN_JAVA_VERSION "17")
 
-(defproject com.github.igrishaev/jsam "0.1.0-SNAPSHOT"
+(defproject com.github.igrishaev/jsam "0.1.0"
 
   :license
   {:name "The Unlicense"
